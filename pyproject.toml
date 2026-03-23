@@ -18,7 +18,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Physics",
 ]
 dependencies = [
-    "qontos>=0.1.0",
+    "qontos @ git+https://github.com/qontos/qontos.git@v0.2.0",
     "numpy>=1.24",
 ]
 
