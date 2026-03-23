@@ -26,9 +26,13 @@ QONTOS Benchmarks is the public evidence repo for the QONTOS platform. It contai
 
 ## Installation
 
+### Pre-release (current)
+
 ```bash
-pip install qontos-bench
+pip install "qontos-bench @ git+https://github.com/qontos/qontos-benchmarks.git@v0.1.0"
 ```
+
+> **Note**: Once published to PyPI, this will simplify to `pip install qontos-bench`.
 
 ## Quick Start
 
