@@ -1,26 +1,36 @@
 <div align="center">
+  <a href="https://github.com/qontos">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/qontos/.github/main/assets/qontos-logo-white.png">
+      <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/qontos/.github/main/assets/qontos-logo.png">
+      <img src="https://raw.githubusercontent.com/qontos/.github/main/assets/qontos-logo.png" alt="QONTOS" width="260">
+    </picture>
+  </a>
 
-<img src="assets/qontos-logo.png" alt="QONTOS" width="400">
+  <h3>QONTOS Benchmarks</h3>
+  <p><strong>Reproducible evidence, methodology, and regression validation for the QONTOS platform.</strong></p>
+  <p>The public proof layer for correctness claims across the SDK, simulator, and modular execution stack.</p>
 
-### Benchmarks
+  <p>
+    <img src="https://img.shields.io/badge/Visibility-Public-0f766e?style=flat-square" alt="Visibility: Public">
+    <img src="https://img.shields.io/badge/Track-Evidence-0b3b8f?style=flat-square" alt="Track: Evidence">
+    <img src="https://img.shields.io/badge/Status-Pre--release-c2410c?style=flat-square" alt="Status: Pre-release">
+    <a href="https://github.com/qontos/qontos-benchmarks/actions"><img src="https://img.shields.io/github/actions/workflow/status/qontos/qontos-benchmarks/ci.yml?branch=main&label=CI&logo=github&style=flat-square" alt="CI"></a>
+  </p>
 
-**Quantum benchmark framework and reproducible methodology for the QONTOS platform**
-
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Python](https://img.shields.io/badge/Python-3.10+-yellow.svg?logo=python&logoColor=white)](https://www.python.org/downloads/)
-[![CI](https://img.shields.io/github/actions/workflow/status/qontos/qontos-benchmarks/ci.yml?branch=main&label=CI&logo=github)](https://github.com/qontos/qontos-benchmarks/actions)
-
-[Installation](#installation) &middot;
-[Quick Start](#quick-start) &middot;
-[Benchmark Suite](#benchmark-suite) &middot;
-[Methodology](#methodology) &middot;
-[Reports](#reports)
-
+  <p>
+    <a href="#overview">Overview</a> &middot;
+    <a href="#installation">Installation</a> &middot;
+    <a href="#quick-start">Quick Start</a> &middot;
+    <a href="#benchmark-suite">Benchmark Suite</a> &middot;
+    <a href="#methodology">Methodology</a> &middot;
+    <a href="#report-format">Report Format</a>
+  </p>
 </div>
 
 ---
 
-## What is this?
+## Overview
 
 QONTOS Benchmarks is the public evidence repo for the QONTOS platform. It contains benchmark definitions, execution methodology, report schemas, and reproducible outputs used to validate correctness, performance, and regression behavior across the public QONTOS stack. This repository is the reference point for public technical claims made by QONTOS.
 
