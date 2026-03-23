@@ -71,7 +71,7 @@ python -m qontos_bench --report json --output results.json
 ## Benchmark Suite
 
 | Benchmark | Circuit | Qubits | Expected States | Fidelity Threshold |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | Bell Pair | H + CNOT | 2 | \|00>, \|11> | >= 0.85 |
 | GHZ-3 | H + 2 CNOT | 3 | \|000>, \|111> | >= 0.85 |
 | GHZ-5 | H + 4 CNOT | 5 | \|00000>, \|11111> | >= 0.85 |
@@ -123,7 +123,7 @@ These benchmarks validate **pipeline correctness** — that the ingest-normalize
 ## Related Repositories
 
 | Repository | Description |
-|------------|-------------|
+| --- | --- |
 | [qontos](https://github.com/qontos/qontos) | Flagship Python SDK |
 | [qontos-sim](https://github.com/qontos/qontos-sim) | Simulators and digital twin |
 | [qontos-examples](https://github.com/qontos/qontos-examples) | Tutorials and examples |
