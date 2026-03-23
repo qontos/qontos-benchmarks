@@ -1,0 +1,44 @@
+"""Verify that all public qontos_bench modules can be imported."""
+
+from __future__ import annotations
+
+
+def test_import_top_level():
+    import qontos_bench
+
+    assert hasattr(qontos_bench, "__version__")
+    assert isinstance(qontos_bench.__version__, str)
+
+
+def test_import_circuits():
+    from qontos_bench import circuits
+
+    # Verify all public circuit generators are importable
+    assert callable(circuits.bell_pair)
+    assert callable(circuits.ghz_state)
+    assert callable(circuits.quantum_fourier_transform)
+    assert callable(circuits.bernstein_vazirani)
+    assert callable(circuits.h2_vqe_ansatz)
+    assert callable(circuits.random_circuit)
+    assert callable(circuits.modular_chain_4q)
+    assert callable(circuits.random_circuit_5q)
+    assert callable(circuits.cut_heavy_6q)
+
+
+def test_import_runner():
+    from qontos_bench.runner import BenchmarkResult, BenchmarkRunner
+
+    assert BenchmarkResult is not None
+    assert BenchmarkRunner is not None
+
+
+def test_import_report():
+    from qontos_bench.report import generate_report
+
+    assert callable(generate_report)
+
+
+def test_import_cli():
+    from qontos_bench.cli import main
+
+    assert callable(main)

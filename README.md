@@ -1,6 +1,8 @@
 <div align="center">
 
-# QONTOS Benchmarks
+<img src="assets/qontos-logo.png" alt="QONTOS" width="400">
+
+### Benchmarks
 
 **Quantum benchmark framework and reproducible methodology for the QONTOS platform**
 
@@ -20,7 +22,7 @@
 
 ## What is this?
 
-This repository provides the benchmark framework by which QONTOS evaluates pipeline correctness and performance. All benchmarks are reproducible and run through the full QONTOS orchestration pipeline.
+QONTOS Benchmarks is the public evidence repo for the QONTOS platform. It contains benchmark definitions, execution methodology, report schemas, and reproducible outputs used to validate correctness, performance, and regression behavior across the public QONTOS stack. This repository is the reference point for public technical claims made by QONTOS.
 
 ## Installation
 
