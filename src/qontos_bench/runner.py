@@ -7,7 +7,7 @@ import logging
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
 
-from benchmarks.circuits import (
+from qontos_bench.circuits import (
     bell_pair,
     bernstein_vazirani,
     ghz_state,

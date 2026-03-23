@@ -1,116 +1,29 @@
 {
-  "generated_at": "2026-03-23T10:00:00+00:00",
-  "total_benchmarks": 5,
-  "passed": 5,
-  "failed": 0,
+  "version": "1.0.0",
+  "timestamp": "2026-03-23T12:00:00Z",
+  "suite": "correctness",
+  "environment": {
+    "python_version": "3.12.0",
+    "qontos_version": "0.1.0",
+    "backend": "qiskit_aer_statevector",
+    "shots": 8192,
+    "seed": 42
+  },
   "results": [
-    {
-      "name": "Bell Pair",
-      "circuit_type": "bell",
-      "num_qubits": 2,
-      "shots": 8192,
-      "counts": {
-        "00": 4121,
-        "11": 4071
-      },
-      "expected_states": ["00", "11"],
-      "dominant_state": "00",
-      "dominant_probability": 0.5031,
-      "fidelity": 1.0,
-      "execution_time_ms": 12.4,
-      "timestamp": "2026-03-23T10:00:01+00:00",
-      "passed": true,
-      "metadata": {}
-    },
-    {
-      "name": "GHZ-3",
-      "circuit_type": "ghz",
-      "num_qubits": 3,
-      "shots": 8192,
-      "counts": {
-        "000": 4085,
-        "111": 4107
-      },
-      "expected_states": ["000", "111"],
-      "dominant_state": "111",
-      "dominant_probability": 0.5013,
-      "fidelity": 1.0,
-      "execution_time_ms": 14.7,
-      "timestamp": "2026-03-23T10:00:02+00:00",
-      "passed": true,
-      "metadata": {}
-    },
-    {
-      "name": "GHZ-5",
-      "circuit_type": "ghz",
-      "num_qubits": 5,
-      "shots": 8192,
-      "counts": {
-        "00000": 4102,
-        "11111": 4090
-      },
-      "expected_states": ["00000", "11111"],
-      "dominant_state": "00000",
-      "dominant_probability": 0.5007,
-      "fidelity": 1.0,
-      "execution_time_ms": 18.3,
-      "timestamp": "2026-03-23T10:00:03+00:00",
-      "passed": true,
-      "metadata": {}
-    },
-    {
-      "name": "QFT-4",
-      "circuit_type": "qft",
-      "num_qubits": 4,
-      "shots": 8192,
-      "counts": {
-        "0000": 518,
-        "0001": 510,
-        "0010": 507,
-        "0011": 521,
-        "0100": 499,
-        "0101": 514,
-        "0110": 503,
-        "0111": 519,
-        "1000": 512,
-        "1001": 508,
-        "1010": 525,
-        "1011": 497,
-        "1100": 516,
-        "1101": 511,
-        "1110": 520,
-        "1111": 512
-      },
-      "expected_states": [
-        "0000", "0001", "0010", "0011",
-        "0100", "0101", "0110", "0111",
-        "1000", "1001", "1010", "1011",
-        "1100", "1101", "1110", "1111"
-      ],
-      "dominant_state": "1010",
-      "dominant_probability": 0.0641,
-      "fidelity": 1.0,
-      "execution_time_ms": 25.1,
-      "timestamp": "2026-03-23T10:00:04+00:00",
-      "passed": true,
-      "metadata": {}
-    },
-    {
-      "name": "Bernstein-Vazirani (s=101)",
-      "circuit_type": "bv",
-      "num_qubits": 4,
-      "shots": 8192,
-      "counts": {
-        "101": 8192
-      },
-      "expected_states": ["101"],
-      "dominant_state": "101",
-      "dominant_probability": 1.0,
-      "fidelity": 1.0,
-      "execution_time_ms": 11.8,
-      "timestamp": "2026-03-23T10:00:05+00:00",
-      "passed": true,
-      "metadata": {}
-    }
-  ]
+    {"name": "bell_pair", "qubits": 2, "fidelity": 1.0, "passed": true, "latency_ms": 45.2, "shots": 8192, "expected_states": ["00", "11"], "top_counts": {"00": 4096, "11": 4096}},
+    {"name": "ghz_3", "qubits": 3, "fidelity": 1.0, "passed": true, "latency_ms": 52.1, "shots": 8192, "expected_states": ["000", "111"], "top_counts": {"000": 4096, "111": 4096}},
+    {"name": "ghz_5", "qubits": 5, "fidelity": 1.0, "passed": true, "latency_ms": 67.8, "shots": 8192, "expected_states": ["00000", "11111"], "top_counts": {"00000": 4096, "11111": 4096}},
+    {"name": "qft_4", "qubits": 4, "fidelity": 1.0, "passed": true, "latency_ms": 58.3, "shots": 8192, "expected_states": ["0000","0001","0010","0011","0100","0101","0110","0111","1000","1001","1010","1011","1100","1101","1110","1111"], "top_counts": {"0000": 512, "0001": 512, "0010": 512, "0011": 512}},
+    {"name": "bernstein_vazirani", "qubits": 4, "fidelity": 1.0, "passed": true, "latency_ms": 41.9, "shots": 8192, "expected_states": ["101"], "top_counts": {"101": 8192}},
+    {"name": "h2_vqe_ansatz", "qubits": 2, "fidelity": 1.0, "passed": true, "latency_ms": 39.5, "shots": 8192, "expected_states": ["00","01","10","11"], "top_counts": {"00": 3520, "01": 672, "10": 672, "11": 3328}},
+    {"name": "random_5q", "qubits": 5, "fidelity": 1.0, "passed": true, "latency_ms": 71.2, "shots": 8192, "expected_states": ["00000","00001","00010","00011","00100"], "top_counts": {"00000": 310, "00001": 285}}
+  ],
+  "summary": {
+    "total": 7,
+    "passed": 7,
+    "failed": 0,
+    "pass_rate": 1.0,
+    "avg_fidelity": 1.0,
+    "total_latency_ms": 376.0
+  }
 }

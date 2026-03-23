@@ -1,7 +1,15 @@
-"""Tests that benchmark report output conforms to the expected JSON schema."""
+"""Tests that benchmark report output conforms to the expected JSON schema.
+
+Validates:
+- JSON report validates against schema
+- Sample report validates
+- Missing required field fails validation
+- Report version is correct
+"""
 
 from __future__ import annotations
 
+import copy
 import json
 from pathlib import Path
 
@@ -23,11 +31,15 @@ def sample_report() -> dict:
     return json.loads(SAMPLE_PATH.read_text())
 
 
+# ---------------------------------------------------------------------------
+# Lightweight schema validator (no jsonschema dependency)
+# ---------------------------------------------------------------------------
+
 def _validate_against_schema(data: dict, schema: dict) -> list[str]:
     """Lightweight schema validation without jsonschema dependency.
 
-    Checks required fields, types, and nested structure as defined in the
-    schema. Returns a list of error strings (empty means valid).
+    Checks required fields, types, const values, and nested structure as
+    defined in the schema.  Returns a list of error strings (empty == valid).
     """
     errors: list[str] = []
 
@@ -61,6 +73,9 @@ def _validate_against_schema(data: dict, schema: dict) -> list[str]:
             field_path = f"{path}.{key}"
             value = obj[key]
 
+            if "const" in prop_schema and value != prop_schema["const"]:
+                errors.append(f"{field_path}: expected const {prop_schema['const']!r}, got {value!r}")
+
             if "type" in prop_schema:
                 _check_type(value, prop_schema["type"], field_path)
 
@@ -82,6 +97,10 @@ def _validate_against_schema(data: dict, schema: dict) -> list[str]:
     return errors
 
 
+# ===================================================================
+# Test: schema & sample files exist
+# ===================================================================
+
 class TestSchemaFileExists:
     def test_schema_exists(self):
         assert SCHEMA_PATH.exists(), f"Schema file not found at {SCHEMA_PATH}"
@@ -93,47 +112,108 @@ class TestSchemaFileExists:
         assert SAMPLE_PATH.exists(), f"Sample report not found at {SAMPLE_PATH}"
 
 
-class TestSampleMatchesSchema:
-    def test_top_level_fields(self, sample_report: dict, schema: dict):
-        errors = _validate_against_schema(sample_report, schema)
-        assert errors == [], f"Schema validation errors:\n" + "\n".join(errors)
+# ===================================================================
+# Test: JSON report validates against schema
+# ===================================================================
 
-    def test_has_results(self, sample_report: dict):
-        assert "results" in sample_report
+class TestJsonReportValidatesAgainstSchema:
+    def test_sample_validates(self, sample_report: dict, schema: dict):
+        errors = _validate_against_schema(sample_report, schema)
+        assert errors == [], "Schema validation errors:\n" + "\n".join(errors)
+
+    def test_has_required_top_level_fields(self, sample_report: dict, schema: dict):
+        for field in schema.get("required", []):
+            assert field in sample_report, f"Missing required top-level field: {field}"
+
+    def test_results_is_nonempty_list(self, sample_report: dict):
         assert isinstance(sample_report["results"], list)
         assert len(sample_report["results"]) > 0
 
-    def test_result_fields(self, sample_report: dict):
-        """Each result must have the core benchmark fields."""
-        required_keys = {
-            "name",
-            "circuit_type",
-            "num_qubits",
-            "shots",
-            "fidelity",
-            "passed",
-            "execution_time_ms",
-            "timestamp",
-        }
+    def test_each_result_has_required_fields(self, sample_report: dict, schema: dict):
+        items_schema = schema["properties"]["results"]["items"]
+        required = items_schema.get("required", [])
         for i, result in enumerate(sample_report["results"]):
-            missing = required_keys - set(result.keys())
-            assert not missing, f"Result [{i}] ({result.get('name', '?')}) missing: {missing}"
+            for req in required:
+                assert req in result, f"Result [{i}] ({result.get('name', '?')}) missing '{req}'"
 
     def test_fidelity_range(self, sample_report: dict):
-        for result in sample_report["results"]:
-            assert 0.0 <= result["fidelity"] <= 1.0, (
-                f"{result['name']}: fidelity {result['fidelity']} out of range"
-            )
+        for r in sample_report["results"]:
+            assert 0.0 <= r["fidelity"] <= 1.0, f"{r['name']}: fidelity out of range"
 
     def test_passed_is_boolean(self, sample_report: dict):
-        for result in sample_report["results"]:
-            assert isinstance(result["passed"], bool)
+        for r in sample_report["results"]:
+            assert isinstance(r["passed"], bool)
 
-    def test_summary_counts(self, sample_report: dict):
-        """Verify total/passed/failed counts are consistent."""
-        total = sample_report["total_benchmarks"]
-        passed = sample_report["passed"]
-        failed = sample_report["failed"]
-        assert total == passed + failed
-        assert total == len(sample_report["results"])
-        assert passed == sum(1 for r in sample_report["results"] if r["passed"])
+
+# ===================================================================
+# Test: missing required field fails validation
+# ===================================================================
+
+class TestMissingFieldFailsValidation:
+    @pytest.mark.parametrize("field", ["version", "timestamp", "suite", "environment", "results", "summary"])
+    def test_remove_top_level_field(self, sample_report: dict, schema: dict, field: str):
+        broken = copy.deepcopy(sample_report)
+        del broken[field]
+        errors = _validate_against_schema(broken, schema)
+        assert any(field in e for e in errors), f"Removing '{field}' should produce a validation error"
+
+    def test_remove_result_name(self, sample_report: dict, schema: dict):
+        broken = copy.deepcopy(sample_report)
+        del broken["results"][0]["name"]
+        errors = _validate_against_schema(broken, schema)
+        assert any("name" in e for e in errors)
+
+    def test_remove_result_fidelity(self, sample_report: dict, schema: dict):
+        broken = copy.deepcopy(sample_report)
+        del broken["results"][0]["fidelity"]
+        errors = _validate_against_schema(broken, schema)
+        assert any("fidelity" in e for e in errors)
+
+    def test_remove_result_passed(self, sample_report: dict, schema: dict):
+        broken = copy.deepcopy(sample_report)
+        del broken["results"][0]["passed"]
+        errors = _validate_against_schema(broken, schema)
+        assert any("passed" in e for e in errors)
+
+    def test_remove_result_latency(self, sample_report: dict, schema: dict):
+        broken = copy.deepcopy(sample_report)
+        del broken["results"][0]["latency_ms"]
+        errors = _validate_against_schema(broken, schema)
+        assert any("latency_ms" in e for e in errors)
+
+
+# ===================================================================
+# Test: report version is correct
+# ===================================================================
+
+class TestReportVersionCorrect:
+    def test_sample_version_is_1_0_0(self, sample_report: dict):
+        assert sample_report["version"] == "1.0.0"
+
+    def test_wrong_version_fails(self, sample_report: dict, schema: dict):
+        broken = copy.deepcopy(sample_report)
+        broken["version"] = "0.0.1"
+        errors = _validate_against_schema(broken, schema)
+        assert any("version" in e and "const" in e for e in errors)
+
+
+# ===================================================================
+# Test: summary statistics are consistent
+# ===================================================================
+
+class TestSummaryConsistency:
+    def test_total_equals_results_length(self, sample_report: dict):
+        assert sample_report["summary"]["total"] == len(sample_report["results"])
+
+    def test_passed_plus_failed_equals_total(self, sample_report: dict):
+        s = sample_report["summary"]
+        assert s["passed"] + s["failed"] == s["total"]
+
+    def test_passed_count_matches_results(self, sample_report: dict):
+        actual_passed = sum(1 for r in sample_report["results"] if r["passed"])
+        assert sample_report["summary"]["passed"] == actual_passed
+
+    def test_pass_rate_value(self, sample_report: dict):
+        s = sample_report["summary"]
+        expected_rate = s["passed"] / s["total"] if s["total"] else 0.0
+        assert abs(s["pass_rate"] - expected_rate) < 1e-4

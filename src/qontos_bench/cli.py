@@ -5,8 +5,8 @@ from __future__ import annotations
 import argparse
 import sys
 
-from benchmarks.runner import BenchmarkRunner
-from benchmarks.report import generate_report
+from qontos_bench.runner import BenchmarkRunner
+from qontos_bench.report import generate_report
 
 
 def main() -> int:

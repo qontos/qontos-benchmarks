@@ -33,9 +33,17 @@ def test_import_runner():
 
 
 def test_import_report():
-    from qontos_bench.report import generate_report
+    from qontos_bench.report import (
+        generate_report,
+        generate_json_report,
+        generate_markdown_report,
+        save_report,
+    )
 
     assert callable(generate_report)
+    assert callable(generate_json_report)
+    assert callable(generate_markdown_report)
+    assert callable(save_report)
 
 
 def test_import_cli():

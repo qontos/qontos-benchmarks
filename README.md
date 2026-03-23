@@ -95,12 +95,15 @@ These benchmarks validate **pipeline correctness** — that the ingest-normalize
 }
 ```
 
-## Related Packages
+## Related Repositories
 
-| Package | Repository | Description |
-|---|---|---|
-| `qontos` | [qontos/qontos](https://github.com/qontos/qontos) | Core orchestration SDK |
-| `qontos-sim` | [qontos/qontos-sim](https://github.com/qontos/qontos-sim) | Quantum simulators |
+| Repository | Description |
+|------------|-------------|
+| [qontos](https://github.com/qontos/qontos) | Flagship Python SDK |
+| [qontos-sim](https://github.com/qontos/qontos-sim) | Simulators and digital twin |
+| [qontos-examples](https://github.com/qontos/qontos-examples) | Tutorials and examples |
+| [qontos-benchmarks](https://github.com/qontos/qontos-benchmarks) | Benchmark evidence |
+| [qontos-research](https://github.com/qontos/qontos-research) | Research papers and roadmap |
 
 ## License
 
