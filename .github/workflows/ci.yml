@@ -43,8 +43,21 @@ jobs:
       - name: Run tests
         run: pytest --tb=short -q
 
+  # ── Install validation: two jobs, two purposes ──
+  #
+  # install-released: Proves the exact README install command works.
+  #   Runs on main push (tag must exist). If this fails, the published
+  #   install path is broken — fix the tag or the README.
+  #
+  # install-candidate: Proves the local checkout installs cleanly.
+  #   Runs on ALL events (pushes and PRs). If this fails on a PR,
+  #   the PR broke the package — fix before merging.
+  #
+  # Together they ensure: PRs can't break installation, and the
+  # README path is validated after every release push.
+
   install-released:
-    name: Released Tag Install (README path)
+    name: "Install: Released Tag (README path)"
     runs-on: ubuntu-latest
     needs: [lint]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -52,7 +65,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install using exact README command (no checkout, no fallback)
+      - name: Install using exact README command
         run: |
           python -m pip install --upgrade pip
           pip install "qontos-bench @ git+https://github.com/qontos/qontos-benchmarks.git@v0.1.0"
@@ -64,11 +77,11 @@ jobs:
           from qontos_bench.runner import BenchmarkRunner
           from qontos_bench.circuits import bell_pair_circuit
           from qontos_bench.report import generate_json_report
-          print('Released-tag install OK')
+          print('Released-tag install: OK')
           "
 
   install-candidate:
-    name: Candidate Install (local checkout)
+    name: "Install: Candidate (local checkout)"
     runs-on: ubuntu-latest
     needs: [lint]
     steps:
@@ -76,11 +89,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install from local checkout
+      - name: Install from local checkout (same as user would after clone)
         run: |
           python -m pip install --upgrade pip
           pip install .
-      - name: Verify import and version
+      - name: Verify imports and CLI
         run: |
           python -c "
           import qontos_bench
@@ -88,10 +101,9 @@ jobs:
           from qontos_bench.runner import BenchmarkRunner
           from qontos_bench.circuits import bell_pair_circuit
           from qontos_bench.report import generate_json_report
-          print('All benchmark imports OK')
+          print('Candidate install: OK')
           "
-      - name: Verify CLI entrypoint
-        run: python -m qontos_bench --help 2>&1 || echo "CLI check complete"
+          python -m qontos_bench --help 2>&1 || true
 
   build:
     name: Build

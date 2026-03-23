@@ -34,6 +34,17 @@ pip install "qontos-bench @ git+https://github.com/qontos/qontos-benchmarks.git@
 
 > **Note**: Once published to PyPI, this will simplify to `pip install qontos-bench`.
 
+### For contributors (local development)
+
+```bash
+git clone https://github.com/qontos/qontos-benchmarks.git
+cd qontos-benchmarks
+pip install -e ".[dev]"
+pytest
+```
+
+CI validates both paths: the released-tag install (on main push) and the local-checkout install (on every PR).
+
 ## Quick Start
 
 ```bash
