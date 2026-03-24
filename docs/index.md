@@ -11,6 +11,7 @@ This page is the lightweight docs hub for `qontos-benchmarks`. Use it to navigat
 | [methodology.md](methodology.md) | benchmark classes, reproducibility rules, and measurement conditions |
 | [metrics.md](metrics.md) | benchmark metric definitions used across reports |
 | [Public Registry](https://github.com/qontos/.github/blob/main/docs/public-registry.md) | shared map across the public QONTOS ecosystem |
+| [Release & Install Policy](https://github.com/qontos/.github/blob/main/docs/release-install-policy.md) | canonical install and release guidance for the public QONTOS repos |
 
 ## Core Docs
 
