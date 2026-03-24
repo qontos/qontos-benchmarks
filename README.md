@@ -22,6 +22,7 @@
     <a href="#overview">Overview</a> &middot;
     <a href="#installation">Installation</a> &middot;
     <a href="#quick-start">Quick Start</a> &middot;
+    <a href="docs/index.md">Docs Hub</a> &middot;
     <a href="#benchmark-suite">Benchmark Suite</a> &middot;
     <a href="#methodology">Methodology</a> &middot;
     <a href="#report-format">Report Format</a>
@@ -33,6 +34,8 @@
 ## Overview
 
 QONTOS Benchmarks is the public evidence repo for the QONTOS platform. It contains benchmark definitions, execution methodology, report schemas, and reproducible outputs used to validate correctness, performance, and regression behavior across the public QONTOS stack. This repository is the reference point for public technical claims made by QONTOS.
+
+Start with [docs/index.md](docs/index.md) for the lightweight docs hub and the key benchmark evidence pages.
 
 ## Installation
 
