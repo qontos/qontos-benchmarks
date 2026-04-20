@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import tempfile
 from datetime import datetime, timezone
 from unittest.mock import patch, MagicMock
@@ -34,11 +35,45 @@ from qontos_bench.report import (
 def _fake_execute(self, qasm: str, shots: int):
     """Simulate a noiseless execution by returning ideal counts.
 
-    For any circuit we just return shots split evenly across two states.
-    This is good enough to exercise the runner logic.
+    The helper inspects the QASM shape so tests remain realistic across
+    Bell/GHZ/QFT/BV/VQE/random circuits without pulling in real simulators.
     """
+    qreg_match = re.search(r"qreg q\[(\d+)\];", qasm)
+    creg_match = re.search(r"creg c\[(\d+)\];", qasm)
+    qreg_size = int(qreg_match.group(1)) if qreg_match else 2
+    creg_size = int(creg_match.group(1)) if creg_match else qreg_size
+
     half = shots // 2
-    return {"00": half, "11": shots - half}, 10.0  # counts, time_ms
+
+    # Bernstein-Vazirani: classical register is smaller than q register,
+    # and oracle CNOTs into the final ancilla encode the secret string.
+    if creg_size < qreg_size:
+        ancilla = qreg_size - 1
+        secret_bits = ["0"] * creg_size
+        for control in re.findall(rf"cx q\[(\d+)\],q\[{ancilla}\];", qasm):
+            idx = int(control)
+            if idx < creg_size:
+                secret_bits[idx] = "1"
+        secret = "".join(secret_bits)
+        return {secret: shots}, 10.0
+
+    width = creg_size
+    zero = "0" * width
+    one = "1" * width
+
+    # GHZ/Bell-like entanglement circuits.
+    if "h q[0];" in qasm and "cx q[0],q[1];" in qasm and "cp(" not in qasm:
+        return {zero: half, one: shots - half}, 10.0
+
+    # QFT-style uniform-output circuit: a couple of valid basis states are enough
+    # for the runner to treat it as a valid distribution.
+    if "cp(" in qasm or "swap q[" in qasm:
+        first = format(0, f"0{width}b")
+        second = format(1, f"0{width}b")
+        return {first: half, second: shots - half}, 10.0
+
+    # Default path for VQE/random-style tests.
+    return {zero: half, one: shots - half}, 10.0
 
 
 def _make_result(
@@ -59,6 +94,23 @@ def _make_result(
         "shots": shots,
         "expected_states": ["00", "11"],
         "top_counts": {"00": shots // 2, "11": shots // 2},
+    }
+
+
+def _make_readiness() -> dict:
+    return {
+        "version": "0.1.0",
+        "generated_at": "2026-04-20T00:00:00Z",
+        "scenario": "software-lab baseline",
+        "gate_status": {
+            "S1": {"status": "OPEN", "rationale": "Device evidence is still missing."},
+            "P1": {"status": "OPEN", "rationale": "Photonic evidence is still missing."},
+            "P2": {"status": "OPEN", "rationale": "Hybrid closure is still missing."},
+        },
+        "prioritized_actions": [
+            "Run the first device characterization batch and record T1/T2.",
+            "Build and calibrate the first standalone transducer bench.",
+        ],
     }
 
 
@@ -262,6 +314,20 @@ class TestSummaryStatistics:
         assert abs(s["pass_rate"] - 2 / 3) < 1e-3
         assert abs(s["avg_fidelity"] - (1.0 + 0.9 + 0.5) / 3) < 1e-3
         assert abs(s["total_latency_ms"] - 60.0) < 0.2
+
+    def test_generate_json_report_with_readiness(self):
+        results = [_make_result("a", fidelity=1.0, passed=True, latency_ms=10.0)]
+        readiness = _make_readiness()
+        report = generate_json_report(results, readiness=readiness)
+        assert report["readiness"]["scenario"] == "software-lab baseline"
+        assert report["readiness"]["gate_status"]["S1"]["status"] == "OPEN"
+
+    def test_generate_markdown_report_with_readiness(self):
+        results = [_make_result("a", fidelity=1.0, passed=True, latency_ms=10.0)]
+        text = generate_markdown_report(results, readiness=_make_readiness())
+        assert "## Readiness" in text
+        assert isinstance(text, str)
+        assert "Top readiness actions:" in text
 
     def test_generate_json_report_has_version(self):
         results = [_make_result()]

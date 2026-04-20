@@ -33,6 +33,7 @@ def generate_json_report(
     backend: str = "qiskit_aer_statevector",
     shots: int = 8192,
     seed: int = 42,
+    readiness: dict | None = None,
 ) -> dict:
     """Build a structured JSON report dict from a list of benchmark results.
 
@@ -92,16 +93,23 @@ def generate_json_report(
             "total_latency_ms": round(total_latency, 1),
         },
     }
+    if readiness is not None:
+        report["readiness"] = readiness
     return report
 
 
-def generate_markdown_report(results: list, *, suite: str = "correctness") -> str:
+def generate_markdown_report(
+    results: list,
+    *,
+    suite: str = "correctness",
+    readiness: dict | None = None,
+) -> str:
     """Return a human-readable Markdown string summarising benchmark results.
 
     Accepts the same *results* list as :func:`generate_json_report` (either
     ``BenchmarkResult`` objects or plain dicts).
     """
-    report = generate_json_report(results, suite=suite)
+    report = generate_json_report(results, suite=suite, readiness=readiness)
     return _render_markdown(report)
 
 
@@ -113,6 +121,7 @@ def save_report(
     backend: str = "qiskit_aer_statevector",
     shots: int = 8192,
     seed: int = 42,
+    readiness: dict | None = None,
 ) -> tuple[str, str]:
     """Persist both JSON and Markdown reports to *output_dir*.
 
@@ -121,7 +130,7 @@ def save_report(
     Path(output_dir).mkdir(parents=True, exist_ok=True)
 
     report = generate_json_report(
-        results, suite=suite, backend=backend, shots=shots, seed=seed,
+        results, suite=suite, backend=backend, shots=shots, seed=seed, readiness=readiness,
     )
 
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
@@ -151,9 +160,11 @@ def save_report(
 def generate_report(
     results: list,
     output_dir: str = "benchmarks/reports",
+    *,
+    readiness: dict | None = None,
 ) -> str:
     """Legacy entry-point used by the CLI.  Returns the JSON report path."""
-    json_path, _md_path = save_report(results, output_dir)
+    json_path, _md_path = save_report(results, output_dir, readiness=readiness)
     return json_path
 
 
@@ -202,5 +213,25 @@ def _render_markdown(report: dict) -> str:
     lines.append(f"- **Average fidelity**: {summary.get('avg_fidelity', 0):.4f}")
     lines.append(f"- **Total latency**: {summary.get('total_latency_ms', 0):.1f} ms")
     lines.append("")
+
+    readiness = report.get("readiness")
+    if readiness:
+        lines.append("## Readiness")
+        lines.append("")
+        gate_status = readiness.get("gate_status", {})
+        lines.append("| Gate | Status | Rationale |")
+        lines.append("|------|--------|-----------|")
+        for gate in ("S1", "P1", "P2"):
+            entry = gate_status.get(gate, {})
+            lines.append(
+                f"| {gate} | {entry.get('status', 'UNKNOWN')} | {entry.get('rationale', 'N/A')} |"
+            )
+        actions = readiness.get("prioritized_actions", [])
+        if actions:
+            lines.append("")
+            lines.append("Top readiness actions:")
+            for action in actions[:5]:
+                lines.append(f"- {action}")
+        lines.append("")
 
     return "\n".join(lines)

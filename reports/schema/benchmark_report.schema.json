@@ -44,6 +44,17 @@
         "avg_fidelity": {"type": "number"},
         "total_latency_ms": {"type": "number"}
       }
+    },
+    "readiness": {
+      "type": "object",
+      "properties": {
+        "version": {"type": "string"},
+        "generated_at": {"type": "string"},
+        "scenario": {"type": "string"},
+        "gate_status": {"type": "object"},
+        "software_lab": {"type": "object"},
+        "prioritized_actions": {"type": "array", "items": {"type": "string"}}
+      }
     }
   }
 }
