@@ -25,12 +25,27 @@
         "properties": {
           "name": {"type": "string"},
           "qubits": {"type": "integer"},
+          "family": {"type": "string"},
           "fidelity": {"type": "number"},
           "passed": {"type": "boolean"},
           "latency_ms": {"type": "number"},
           "shots": {"type": "integer"},
           "expected_states": {"type": "array", "items": {"type": "string"}},
           "top_counts": {"type": "object"}
+        }
+      }
+    },
+    "family_summary": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "family": {"type": "string"},
+          "total": {"type": "integer"},
+          "passed": {"type": "integer"},
+          "failed": {"type": "integer"},
+          "pass_rate": {"type": "number"},
+          "avg_fidelity": {"type": "number"}
         }
       }
     },

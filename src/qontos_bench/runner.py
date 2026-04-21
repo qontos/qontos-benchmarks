@@ -10,10 +10,15 @@ from datetime import datetime, timezone
 from qontos_bench.circuits import (
     bell_pair,
     bernstein_vazirani,
+    distributed_ghz_6q,
     ghz_state,
     h2_vqe_ansatz,
+    photonic_link_bell_4q,
     quantum_fourier_transform,
     random_circuit,
+    remote_cnot_surrogate_4q,
+    syndrome_burst_5q,
+    teleportation_chain_4q,
 )
 
 logger = logging.getLogger(__name__)
@@ -29,6 +34,7 @@ class BenchmarkResult:
     shots: int
     counts: dict[str, int]
     expected_states: list[str]  # expected dominant states
+    family: str
     dominant_state: str
     dominant_probability: float
     fidelity: float  # overlap with expected
@@ -63,6 +69,29 @@ class BenchmarkRunner:
         self.results.append(self.run_random_5q())
         return self.results
 
+    def run_hybrid_pack(self) -> list[BenchmarkResult]:
+        """Run the hybrid modular benchmark pack."""
+        self.results = []
+        self.results.append(self.run_photonic_link_bell())
+        self.results.append(self.run_teleportation_chain())
+        self.results.append(self.run_remote_cnot_surrogate())
+        self.results.append(self.run_distributed_ghz())
+        self.results.append(self.run_syndrome_burst())
+        return self.results
+
+    def run_suite(self, suite: str) -> list[BenchmarkResult]:
+        """Run one named benchmark suite."""
+        if suite == "standard":
+            return self.run_all()
+        if suite == "hybrid":
+            return self.run_hybrid_pack()
+        if suite == "full":
+            standard = self.run_all()
+            hybrid = self.run_hybrid_pack()
+            self.results = [*standard, *hybrid]
+            return self.results
+        raise ValueError(f"Unknown suite: {suite}. Choose from ['standard', 'hybrid', 'full']")
+
     def run_single(self, name: str) -> BenchmarkResult:
         """Run a single benchmark by name."""
         dispatch = {
@@ -73,6 +102,11 @@ class BenchmarkRunner:
             "bv": self.run_bernstein_vazirani,
             "vqe": self.run_h2_vqe,
             "random": self.run_random_5q,
+            "photonic-bell": self.run_photonic_link_bell,
+            "teleport": self.run_teleportation_chain,
+            "remote-cnot": self.run_remote_cnot_surrogate,
+            "distributed-ghz": self.run_distributed_ghz,
+            "syndrome-burst": self.run_syndrome_burst,
         }
         if name not in dispatch:
             raise ValueError(f"Unknown benchmark: {name}. Choose from {list(dispatch)}")
@@ -95,6 +129,7 @@ class BenchmarkRunner:
             num_qubits=2,
             counts=counts,
             expected=expected,
+            family="core",
             time_ms=time_ms,
         )
 
@@ -109,6 +144,7 @@ class BenchmarkRunner:
             num_qubits=3,
             counts=counts,
             expected=expected,
+            family="core",
             time_ms=time_ms,
         )
 
@@ -123,6 +159,7 @@ class BenchmarkRunner:
             num_qubits=5,
             counts=counts,
             expected=expected,
+            family="core",
             time_ms=time_ms,
         )
 
@@ -146,6 +183,7 @@ class BenchmarkRunner:
             num_qubits=4,
             counts=counts,
             expected=expected,
+            family="core",
             time_ms=time_ms,
             # QFT uniform output: pass if fidelity >= 0.85 (most shots in valid states)
         )
@@ -162,6 +200,7 @@ class BenchmarkRunner:
             num_qubits=len(secret) + 1,
             counts=counts,
             expected=expected,
+            family="core",
             time_ms=time_ms,
         )
 
@@ -178,6 +217,7 @@ class BenchmarkRunner:
             num_qubits=2,
             counts=counts,
             expected=expected,
+            family="core",
             time_ms=time_ms,
         )
 
@@ -194,6 +234,82 @@ class BenchmarkRunner:
             num_qubits=5,
             counts=counts,
             expected=expected,
+            family="core",
+            time_ms=time_ms,
+        )
+
+    def run_photonic_link_bell(self) -> BenchmarkResult:
+        """Bell-pair distribution surrogate across a photonic link."""
+        qasm = photonic_link_bell_4q()
+        counts, time_ms = self._execute(qasm, self.shots)
+        expected = ["0000", "1111"]
+        return self._build_result(
+            name="Photonic Link Bell-4",
+            circuit_type="hybrid_link",
+            num_qubits=4,
+            counts=counts,
+            expected=expected,
+            family="photonic_link",
+            time_ms=time_ms,
+        )
+
+    def run_teleportation_chain(self) -> BenchmarkResult:
+        """Teleportation-chain surrogate for distributed state transfer."""
+        qasm = teleportation_chain_4q()
+        counts, time_ms = self._execute(qasm, self.shots)
+        expected = ["0000", "1111"]
+        return self._build_result(
+            name="Teleportation Chain-4",
+            circuit_type="teleportation",
+            num_qubits=4,
+            counts=counts,
+            expected=expected,
+            family="teleportation",
+            time_ms=time_ms,
+        )
+
+    def run_remote_cnot_surrogate(self) -> BenchmarkResult:
+        """Remote-CNOT surrogate for modular entangling workflows."""
+        qasm = remote_cnot_surrogate_4q()
+        counts, time_ms = self._execute(qasm, self.shots)
+        expected = ["0000", "1111"]
+        return self._build_result(
+            name="Remote CNOT Surrogate-4",
+            circuit_type="remote_cnot",
+            num_qubits=4,
+            counts=counts,
+            expected=expected,
+            family="remote_entangling",
+            time_ms=time_ms,
+        )
+
+    def run_distributed_ghz(self) -> BenchmarkResult:
+        """Distributed GHZ benchmark for multi-module entanglement spread."""
+        qasm = distributed_ghz_6q()
+        counts, time_ms = self._execute(qasm, self.shots)
+        expected = ["000000", "111111"]
+        return self._build_result(
+            name="Distributed GHZ-6",
+            circuit_type="distributed_ghz",
+            num_qubits=6,
+            counts=counts,
+            expected=expected,
+            family="distributed_entanglement",
+            time_ms=time_ms,
+        )
+
+    def run_syndrome_burst(self) -> BenchmarkResult:
+        """Syndrome-burst surrogate for parity extraction pressure."""
+        qasm = syndrome_burst_5q()
+        counts, time_ms = self._execute(qasm, self.shots)
+        expected = ["00000", "11111"]
+        return self._build_result(
+            name="Syndrome Burst-5",
+            circuit_type="syndrome_burst",
+            num_qubits=5,
+            counts=counts,
+            expected=expected,
+            family="syndrome_burst",
             time_ms=time_ms,
         )
 
@@ -229,6 +345,7 @@ class BenchmarkRunner:
         num_qubits: int,
         counts: dict[str, int],
         expected: list[str],
+        family: str,
         time_ms: float,
     ) -> BenchmarkResult:
         """Build a BenchmarkResult from raw execution outputs."""
@@ -254,6 +371,7 @@ class BenchmarkRunner:
             shots=total,
             counts=counts,
             expected_states=expected,
+            family=family,
             dominant_state=dominant_state,
             dominant_probability=dominant_probability,
             fidelity=fidelity,

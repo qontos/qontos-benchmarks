@@ -23,6 +23,11 @@ def test_import_circuits():
     assert callable(circuits.modular_chain_4q)
     assert callable(circuits.random_circuit_5q)
     assert callable(circuits.cut_heavy_6q)
+    assert callable(circuits.photonic_link_bell_4q)
+    assert callable(circuits.teleportation_chain_4q)
+    assert callable(circuits.remote_cnot_surrogate_4q)
+    assert callable(circuits.distributed_ghz_6q)
+    assert callable(circuits.syndrome_burst_5q)
 
 
 def test_import_runner():

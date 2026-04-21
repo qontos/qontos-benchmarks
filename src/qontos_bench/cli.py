@@ -24,7 +24,23 @@ def main() -> int:
     )
     parser.add_argument(
         "--circuit",
-        choices=["bell", "ghz", "ghz5", "qft", "bv", "vqe", "random", "all"],
+        choices=[
+            "bell",
+            "ghz",
+            "ghz5",
+            "qft",
+            "bv",
+            "vqe",
+            "random",
+            "photonic-bell",
+            "teleport",
+            "remote-cnot",
+            "distributed-ghz",
+            "syndrome-burst",
+            "all",
+            "hybrid",
+            "full",
+        ],
         default="all",
         help="Which benchmark to run (default: all)",
     )
@@ -32,12 +48,27 @@ def main() -> int:
 
     runner = BenchmarkRunner(shots=args.shots)
 
+    suite = "correctness"
     if args.circuit == "all":
         results = runner.run_all()
+    elif args.circuit == "hybrid":
+        results = runner.run_hybrid_pack()
+        suite = "hybrid"
+    elif args.circuit == "full":
+        results = runner.run_suite("full")
+        suite = "full-stack"
     else:
         results = [runner.run_single(args.circuit)]
+        if args.circuit in {
+            "photonic-bell",
+            "teleport",
+            "remote-cnot",
+            "distributed-ghz",
+            "syndrome-burst",
+        }:
+            suite = "hybrid"
 
-    report_path = generate_report(results, args.output)
+    report_path = generate_report(results, args.output, suite=suite)
 
     # Print summary
     passed = sum(1 for r in results if r.passed)

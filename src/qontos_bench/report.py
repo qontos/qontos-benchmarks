@@ -49,6 +49,7 @@ def generate_json_report(
         entry: dict = {
             "name": d.get("name", ""),
             "qubits": d.get("qubits", d.get("num_qubits", 0)),
+            "family": d.get("family", "core"),
             "fidelity": d.get("fidelity", 0.0),
             "passed": d.get("passed", False),
             "latency_ms": d.get("latency_ms", d.get("execution_time_ms", 0.0)),
@@ -71,6 +72,7 @@ def generate_json_report(
     fidelities = [r["fidelity"] for r in normalised]
     avg_fidelity = sum(fidelities) / total if total else 0.0
     total_latency = sum(r["latency_ms"] for r in normalised)
+    family_summary = _build_family_summary(normalised)
 
     report: dict = {
         "version": "1.0.0",
@@ -92,6 +94,7 @@ def generate_json_report(
             "avg_fidelity": round(avg_fidelity, 4),
             "total_latency_ms": round(total_latency, 1),
         },
+        "family_summary": family_summary,
     }
     if readiness is not None:
         report["readiness"] = readiness
@@ -161,10 +164,11 @@ def generate_report(
     results: list,
     output_dir: str = "benchmarks/reports",
     *,
+    suite: str = "correctness",
     readiness: dict | None = None,
 ) -> str:
     """Legacy entry-point used by the CLI.  Returns the JSON report path."""
-    json_path, _md_path = save_report(results, output_dir, readiness=readiness)
+    json_path, _md_path = save_report(results, output_dir, suite=suite, readiness=readiness)
     return json_path
 
 
@@ -190,13 +194,14 @@ def _render_markdown(report: dict) -> str:
     lines.append("")
     lines.append("## Results")
     lines.append("")
-    lines.append("| Benchmark | Qubits | Fidelity | Latency (ms) | Status |")
-    lines.append("|-----------|--------|----------|--------------|--------|")
+    lines.append("| Benchmark | Family | Qubits | Fidelity | Latency (ms) | Status |")
+    lines.append("|-----------|--------|--------|----------|--------------|--------|")
 
     for r in report.get("results", []):
         status = "PASS" if r.get("passed") else "FAIL"
         lines.append(
             f"| {r.get('name', '?')} "
+            f"| {r.get('family', 'core')} "
             f"| {r.get('qubits', '?')} "
             f"| {r.get('fidelity', 0):.3f} "
             f"| {r.get('latency_ms', 0):.1f} "
@@ -213,6 +218,22 @@ def _render_markdown(report: dict) -> str:
     lines.append(f"- **Average fidelity**: {summary.get('avg_fidelity', 0):.4f}")
     lines.append(f"- **Total latency**: {summary.get('total_latency_ms', 0):.1f} ms")
     lines.append("")
+
+    family_summary = report.get("family_summary", [])
+    if family_summary:
+        lines.append("## Family Summary")
+        lines.append("")
+        lines.append("| Family | Total | Passed | Pass Rate | Avg Fidelity |")
+        lines.append("|--------|-------|--------|-----------|--------------|")
+        for family in family_summary:
+            lines.append(
+                f"| {family.get('family', 'unknown')} "
+                f"| {family.get('total', 0)} "
+                f"| {family.get('passed', 0)} "
+                f"| {family.get('pass_rate', 0):.1%} "
+                f"| {family.get('avg_fidelity', 0):.4f} |"
+            )
+        lines.append("")
 
     readiness = report.get("readiness")
     if readiness:
@@ -235,3 +256,40 @@ def _render_markdown(report: dict) -> str:
         lines.append("")
 
     return "\n".join(lines)
+
+
+def _build_family_summary(results: list[dict]) -> list[dict]:
+    families: dict[str, dict[str, float | int | str]] = {}
+    for result in results:
+        family = str(result.get("family", "core"))
+        bucket = families.setdefault(
+            family,
+            {
+                "family": family,
+                "total": 0,
+                "passed": 0,
+                "_fidelity_sum": 0.0,
+            },
+        )
+        bucket["total"] += 1
+        bucket["passed"] += 1 if result.get("passed") else 0
+        bucket["_fidelity_sum"] += float(result.get("fidelity", 0.0))
+
+    summary: list[dict] = []
+    for family in sorted(families):
+        bucket = families[family]
+        total = int(bucket["total"])
+        passed = int(bucket["passed"])
+        fidelity_sum = float(bucket["_fidelity_sum"])
+        summary.append(
+            {
+                "family": family,
+                "total": total,
+                "passed": passed,
+                "failed": total - passed,
+                "pass_rate": round(passed / total, 4) if total else 0.0,
+                "avg_fidelity": round(fidelity_sum / total, 4) if total else 0.0,
+            }
+        )
+
+    return summary

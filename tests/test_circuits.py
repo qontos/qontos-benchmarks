@@ -13,12 +13,17 @@ from qontos_bench.circuits import (
     bell_pair,
     bernstein_vazirani,
     cut_heavy_6q,
+    distributed_ghz_6q,
     ghz_state,
     h2_vqe_ansatz,
     modular_chain_4q,
+    photonic_link_bell_4q,
     quantum_fourier_transform,
     random_circuit,
     random_circuit_5q,
+    remote_cnot_surrogate_4q,
+    syndrome_burst_5q,
+    teleportation_chain_4q,
 )
 
 
@@ -313,6 +318,43 @@ class TestCutHeavy6Q:
         assert cut_heavy_6q() == cut_heavy_6q()
 
 
+class TestHybridCircuits:
+    def test_photonic_link_bell_structure(self):
+        qasm = photonic_link_bell_4q()
+        info = _parse_qasm_header(qasm)
+        assert info["num_qubits"] == 4
+        assert "cx q[1],q[2]" in qasm
+        assert info["measurements"] == 4
+
+    def test_teleportation_chain_structure(self):
+        qasm = teleportation_chain_4q()
+        info = _parse_qasm_header(qasm)
+        assert info["num_qubits"] == 4
+        assert "cx q[1],q[2]" in qasm
+        assert info["measurements"] == 4
+
+    def test_remote_cnot_structure(self):
+        qasm = remote_cnot_surrogate_4q()
+        info = _parse_qasm_header(qasm)
+        assert info["num_qubits"] == 4
+        assert "cx q[1],q[3]" in qasm
+        assert info["measurements"] == 4
+
+    def test_distributed_ghz_structure(self):
+        qasm = distributed_ghz_6q()
+        info = _parse_qasm_header(qasm)
+        assert info["num_qubits"] == 6
+        assert "cx q[4],q[5]" in qasm
+        assert info["measurements"] == 6
+
+    def test_syndrome_burst_structure(self):
+        qasm = syndrome_burst_5q()
+        info = _parse_qasm_header(qasm)
+        assert info["num_qubits"] == 5
+        assert "cx q[1],q[4]" in qasm
+        assert info["measurements"] == 5
+
+
 # ===================================================================
 # Cross-circuit: valid QASM and metadata consistency
 # ===================================================================
@@ -326,6 +368,11 @@ _ALL_CIRCUITS = [
     ("h2_vqe", h2_vqe_ansatz, {"theta": 0.5}, 2),
     ("modular_4q", modular_chain_4q, {}, 4),
     ("cut_heavy_6q", cut_heavy_6q, {}, 6),
+    ("photonic_link_bell_4q", photonic_link_bell_4q, {}, 4),
+    ("teleportation_chain_4q", teleportation_chain_4q, {}, 4),
+    ("remote_cnot_surrogate_4q", remote_cnot_surrogate_4q, {}, 4),
+    ("distributed_ghz_6q", distributed_ghz_6q, {}, 6),
+    ("syndrome_burst_5q", syndrome_burst_5q, {}, 5),
     ("random_5q", random_circuit_5q, {}, 5),
 ]
 

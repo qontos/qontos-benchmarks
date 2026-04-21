@@ -188,7 +188,20 @@ class TestRunnerReportStructure:
 class TestAllBenchmarksDefined:
     def test_dispatch_contains_all_keys(self):
         runner = BenchmarkRunner()
-        expected_keys = {"bell", "ghz", "ghz5", "qft", "bv", "vqe", "random"}
+        expected_keys = {
+            "bell",
+            "ghz",
+            "ghz5",
+            "qft",
+            "bv",
+            "vqe",
+            "random",
+            "photonic-bell",
+            "teleport",
+            "remote-cnot",
+            "distributed-ghz",
+            "syndrome-burst",
+        }
         dispatch = {
             "bell": runner.run_bell_pair,
             "ghz": runner.run_ghz_3,
@@ -197,6 +210,11 @@ class TestAllBenchmarksDefined:
             "bv": runner.run_bernstein_vazirani,
             "vqe": runner.run_h2_vqe,
             "random": runner.run_random_5q,
+            "photonic-bell": runner.run_photonic_link_bell,
+            "teleport": runner.run_teleportation_chain,
+            "remote-cnot": runner.run_remote_cnot_surrogate,
+            "distributed-ghz": runner.run_distributed_ghz,
+            "syndrome-burst": runner.run_syndrome_burst,
         }
         assert set(dispatch.keys()) == expected_keys
 
@@ -213,12 +231,47 @@ class TestAllBenchmarksDefined:
             runner.run_single("nonexistent")
 
     @patch.object(BenchmarkRunner, "_execute", _fake_execute)
-    @pytest.mark.parametrize("key", ["bell", "ghz", "ghz5", "qft", "bv", "vqe", "random"])
+    @pytest.mark.parametrize(
+        "key",
+        [
+            "bell",
+            "ghz",
+            "ghz5",
+            "qft",
+            "bv",
+            "vqe",
+            "random",
+            "photonic-bell",
+            "teleport",
+            "remote-cnot",
+            "distributed-ghz",
+            "syndrome-burst",
+        ],
+    )
     def test_run_single_each(self, key: str):
         runner = BenchmarkRunner(shots=256)
         result = runner.run_single(key)
         assert isinstance(result, BenchmarkResult)
         assert result.passed is True
+
+    @patch.object(BenchmarkRunner, "_execute", _fake_execute)
+    def test_run_hybrid_pack_returns_expected_count(self):
+        runner = BenchmarkRunner(shots=256)
+        results = runner.run_hybrid_pack()
+        assert len(results) == 5
+        assert {result.family for result in results} == {
+            "photonic_link",
+            "teleportation",
+            "remote_entangling",
+            "distributed_entanglement",
+            "syndrome_burst",
+        }
+
+    @patch.object(BenchmarkRunner, "_execute", _fake_execute)
+    def test_run_full_suite_includes_standard_and_hybrid(self):
+        runner = BenchmarkRunner(shots=256)
+        results = runner.run_suite("full")
+        assert len(results) == 12
 
 
 # ===================================================================
@@ -322,6 +375,18 @@ class TestSummaryStatistics:
         assert report["readiness"]["scenario"] == "software-lab baseline"
         assert report["readiness"]["gate_status"]["S1"]["status"] == "OPEN"
 
+    def test_generate_json_report_builds_family_summary(self):
+        results = [
+            {**_make_result("a", fidelity=1.0, passed=True, latency_ms=10.0), "family": "photonic_link"},
+            {**_make_result("b", fidelity=0.8, passed=False, latency_ms=12.0), "family": "photonic_link"},
+            {**_make_result("c", fidelity=0.9, passed=True, latency_ms=8.0), "family": "syndrome_burst"},
+        ]
+        report = generate_json_report(results, suite="hybrid")
+        family_summary = {entry["family"]: entry for entry in report["family_summary"]}
+        assert family_summary["photonic_link"]["total"] == 2
+        assert family_summary["photonic_link"]["failed"] == 1
+        assert family_summary["syndrome_burst"]["pass_rate"] == 1.0
+
     def test_generate_markdown_report_with_readiness(self):
         results = [_make_result("a", fidelity=1.0, passed=True, latency_ms=10.0)]
         text = generate_markdown_report(results, readiness=_make_readiness())
@@ -350,6 +415,12 @@ class TestSummaryStatistics:
         assert "| Benchmark |" in md
         assert "| bell " in md
         assert "PASS" in md
+
+    def test_generate_markdown_report_contains_family_summary(self):
+        results = [{**_make_result("hybrid", fidelity=1.0), "family": "photonic_link"}]
+        md = generate_markdown_report(results, suite="hybrid")
+        assert "## Family Summary" in md
+        assert "photonic_link" in md
 
     def test_save_report_creates_files(self):
         results = [_make_result("bell")]

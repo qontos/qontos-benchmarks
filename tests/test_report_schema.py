@@ -144,6 +144,10 @@ class TestJsonReportValidatesAgainstSchema:
         for r in sample_report["results"]:
             assert isinstance(r["passed"], bool)
 
+    def test_family_summary_present(self, sample_report: dict):
+        assert "family_summary" in sample_report
+        assert isinstance(sample_report["family_summary"], list)
+
 
 # ===================================================================
 # Test: missing required field fails validation

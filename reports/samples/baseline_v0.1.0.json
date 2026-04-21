@@ -10,13 +10,16 @@
     "seed": 42
   },
   "results": [
-    {"name": "bell_pair", "qubits": 2, "fidelity": 1.0, "passed": true, "latency_ms": 45.2, "shots": 8192, "expected_states": ["00", "11"], "top_counts": {"00": 4096, "11": 4096}},
-    {"name": "ghz_3", "qubits": 3, "fidelity": 1.0, "passed": true, "latency_ms": 52.1, "shots": 8192, "expected_states": ["000", "111"], "top_counts": {"000": 4096, "111": 4096}},
-    {"name": "ghz_5", "qubits": 5, "fidelity": 1.0, "passed": true, "latency_ms": 67.8, "shots": 8192, "expected_states": ["00000", "11111"], "top_counts": {"00000": 4096, "11111": 4096}},
-    {"name": "qft_4", "qubits": 4, "fidelity": 1.0, "passed": true, "latency_ms": 58.3, "shots": 8192, "expected_states": ["0000","0001","0010","0011","0100","0101","0110","0111","1000","1001","1010","1011","1100","1101","1110","1111"], "top_counts": {"0000": 512, "0001": 512, "0010": 512, "0011": 512}},
-    {"name": "bernstein_vazirani", "qubits": 4, "fidelity": 1.0, "passed": true, "latency_ms": 41.9, "shots": 8192, "expected_states": ["101"], "top_counts": {"101": 8192}},
-    {"name": "h2_vqe_ansatz", "qubits": 2, "fidelity": 1.0, "passed": true, "latency_ms": 39.5, "shots": 8192, "expected_states": ["00","01","10","11"], "top_counts": {"00": 3520, "01": 672, "10": 672, "11": 3328}},
-    {"name": "random_5q", "qubits": 5, "fidelity": 1.0, "passed": true, "latency_ms": 71.2, "shots": 8192, "expected_states": ["00000","00001","00010","00011","00100"], "top_counts": {"00000": 310, "00001": 285}}
+    {"name": "bell_pair", "family": "core", "qubits": 2, "fidelity": 1.0, "passed": true, "latency_ms": 45.2, "shots": 8192, "expected_states": ["00", "11"], "top_counts": {"00": 4096, "11": 4096}},
+    {"name": "ghz_3", "family": "core", "qubits": 3, "fidelity": 1.0, "passed": true, "latency_ms": 52.1, "shots": 8192, "expected_states": ["000", "111"], "top_counts": {"000": 4096, "111": 4096}},
+    {"name": "ghz_5", "family": "core", "qubits": 5, "fidelity": 1.0, "passed": true, "latency_ms": 67.8, "shots": 8192, "expected_states": ["00000", "11111"], "top_counts": {"00000": 4096, "11111": 4096}},
+    {"name": "qft_4", "family": "core", "qubits": 4, "fidelity": 1.0, "passed": true, "latency_ms": 58.3, "shots": 8192, "expected_states": ["0000","0001","0010","0011","0100","0101","0110","0111","1000","1001","1010","1011","1100","1101","1110","1111"], "top_counts": {"0000": 512, "0001": 512, "0010": 512, "0011": 512}},
+    {"name": "bernstein_vazirani", "family": "core", "qubits": 4, "fidelity": 1.0, "passed": true, "latency_ms": 41.9, "shots": 8192, "expected_states": ["101"], "top_counts": {"101": 8192}},
+    {"name": "h2_vqe_ansatz", "family": "core", "qubits": 2, "fidelity": 1.0, "passed": true, "latency_ms": 39.5, "shots": 8192, "expected_states": ["00","01","10","11"], "top_counts": {"00": 3520, "01": 672, "10": 672, "11": 3328}},
+    {"name": "random_5q", "family": "core", "qubits": 5, "fidelity": 1.0, "passed": true, "latency_ms": 71.2, "shots": 8192, "expected_states": ["00000","00001","00010","00011","00100"], "top_counts": {"00000": 310, "00001": 285}}
+  ],
+  "family_summary": [
+    {"family": "core", "total": 7, "passed": 7, "failed": 0, "pass_rate": 1.0, "avg_fidelity": 1.0}
   ],
   "summary": {
     "total": 7,

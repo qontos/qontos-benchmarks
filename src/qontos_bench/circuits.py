@@ -202,6 +202,104 @@ measure q[5] -> c[5];
 """
 
 
+def photonic_link_bell_4q() -> str:
+    """4-qubit Bell-pair distribution surrogate across a photonic seam."""
+    return """\
+OPENQASM 2.0;
+include "qelib1.inc";
+qreg q[4];
+creg c[4];
+h q[0];
+cx q[0],q[1];
+cx q[1],q[2];
+cx q[2],q[3];
+measure q[0] -> c[0];
+measure q[1] -> c[1];
+measure q[2] -> c[2];
+measure q[3] -> c[3];
+"""
+
+
+def teleportation_chain_4q() -> str:
+    """4-qubit teleportation-chain surrogate without classical feed-forward."""
+    return """\
+OPENQASM 2.0;
+include "qelib1.inc";
+qreg q[4];
+creg c[4];
+h q[0];
+cx q[0],q[1];
+h q[2];
+cx q[2],q[3];
+cx q[1],q[2];
+cx q[0],q[3];
+measure q[0] -> c[0];
+measure q[1] -> c[1];
+measure q[2] -> c[2];
+measure q[3] -> c[3];
+"""
+
+
+def remote_cnot_surrogate_4q() -> str:
+    """4-qubit remote-CNOT surrogate using a modular entanglement scaffold."""
+    return """\
+OPENQASM 2.0;
+include "qelib1.inc";
+qreg q[4];
+creg c[4];
+h q[0];
+cx q[0],q[1];
+cx q[0],q[2];
+cx q[1],q[3];
+cx q[2],q[3];
+measure q[0] -> c[0];
+measure q[1] -> c[1];
+measure q[2] -> c[2];
+measure q[3] -> c[3];
+"""
+
+
+def distributed_ghz_6q() -> str:
+    """6-qubit distributed GHZ chain for modular entanglement stress."""
+    lines = [
+        'OPENQASM 2.0;',
+        'include "qelib1.inc";',
+        'qreg q[6];',
+        'creg c[6];',
+        'h q[0];',
+        'cx q[0],q[1];',
+        'cx q[1],q[2];',
+        'cx q[2],q[3];',
+        'cx q[3],q[4];',
+        'cx q[4],q[5];',
+    ]
+    for i in range(6):
+        lines.append(f'measure q[{i}] -> c[{i}];')
+    return '\n'.join(lines)
+
+
+def syndrome_burst_5q() -> str:
+    """5-qubit syndrome-burst surrogate with repeated parity-style interactions."""
+    return """\
+OPENQASM 2.0;
+include "qelib1.inc";
+qreg q[5];
+creg c[5];
+h q[0];
+cx q[0],q[1];
+cx q[0],q[2];
+cx q[1],q[3];
+cx q[2],q[3];
+cx q[1],q[4];
+cx q[2],q[4];
+measure q[0] -> c[0];
+measure q[1] -> c[1];
+measure q[2] -> c[2];
+measure q[3] -> c[3];
+measure q[4] -> c[4];
+"""
+
+
 def random_circuit(n_qubits: int = 5, depth: int = 10, seed: int = 42) -> str:
     """Random circuit for stress testing.
 
