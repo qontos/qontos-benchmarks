@@ -58,6 +58,7 @@ pytest
 ```
 
 CI validates both paths: the released-tag install (on main push) and the local-checkout install (on every PR).
+CI also now emits a `hybrid-benchmark-report` artifact from the live hybrid benchmark pack so downstream systems workflows can consume a real generated JSON report instead of a static fixture.
 
 ## Quick Start
 
