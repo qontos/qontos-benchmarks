@@ -15,6 +15,7 @@ from qontos_bench.circuits import (
     entanglement_swapping_6q,
     ghz_state,
     h2_vqe_ansatz,
+    logical_patch_handoff_10q,
     patch_syndrome_round_9q,
     photonic_link_bell_4q,
     quantum_fourier_transform,
@@ -24,6 +25,7 @@ from qontos_bench.circuits import (
     syndrome_burst_5q,
     teleportation_ladder_8q,
     teleportation_chain_4q,
+    transducer_calibration_loop_6q,
 )
 
 logger = logging.getLogger(__name__)
@@ -92,6 +94,18 @@ class BenchmarkRunner:
         self.results.append(self.run_remote_parity_ladder())
         self.results.append(self.run_distributed_ghz_ladder())
         self.results.append(self.run_patch_syndrome_round())
+        self.results.append(self._run_transducer_calibration_loop(suite="hybrid-stress"))
+        self.results.append(self._run_logical_patch_handoff(suite="hybrid-stress"))
+        return self.results
+
+    def run_transduction_closure_pack(self) -> list[BenchmarkResult]:
+        """Run the FTQC-facing transduction-closure benchmark pack."""
+        self.results = []
+        self.results.append(self.run_transduction_closure_link())
+        self.results.append(self.run_transduction_closure_remote_parity())
+        self.results.append(self.run_transduction_closure_patch_syndrome())
+        self.results.append(self.run_transducer_calibration_loop())
+        self.results.append(self.run_logical_patch_handoff())
         return self.results
 
     def run_suite(self, suite: str) -> list[BenchmarkResult]:
@@ -102,14 +116,17 @@ class BenchmarkRunner:
             return self.run_hybrid_pack()
         if suite == "hybrid-stress":
             return self.run_hybrid_stress_pack()
+        if suite == "transduction-closure":
+            return self.run_transduction_closure_pack()
         if suite == "full":
             standard = self.run_all()
             hybrid = self.run_hybrid_pack()
             stress = self.run_hybrid_stress_pack()
-            self.results = [*standard, *hybrid, *stress]
+            closure = self.run_transduction_closure_pack()
+            self.results = [*standard, *hybrid, *stress, *closure]
             return self.results
         raise ValueError(
-            f"Unknown suite: {suite}. Choose from ['standard', 'hybrid', 'hybrid-stress', 'full']"
+            f"Unknown suite: {suite}. Choose from ['standard', 'hybrid', 'hybrid-stress', 'transduction-closure', 'full']"
         )
 
     def run_single(self, name: str) -> BenchmarkResult:
@@ -132,6 +149,8 @@ class BenchmarkRunner:
             "remote-parity": self.run_remote_parity_ladder,
             "distributed-ghz-ladder": self.run_distributed_ghz_ladder,
             "patch-syndrome": self.run_patch_syndrome_round,
+            "transducer-cal": self.run_transducer_calibration_loop,
+            "logical-patch-handoff": self.run_logical_patch_handoff,
         }
         if name not in dispatch:
             raise ValueError(f"Unknown benchmark: {name}. Choose from {list(dispatch)}")
@@ -421,6 +440,109 @@ class BenchmarkRunner:
             family="syndrome_burst",
             time_ms=time_ms,
             metadata={"stressors": ["control_jitter", "memory_wait"], "suite": "hybrid-stress"},
+        )
+
+    def run_transduction_closure_link(self) -> BenchmarkResult:
+        """Closure-pack Bell distribution anchor for the transduction seam."""
+        qasm = photonic_link_bell_4q()
+        counts, time_ms = self._execute(qasm, self.shots)
+        expected = ["0000", "1111"]
+        return self._build_result(
+            name="Transduction Closure Link-4",
+            circuit_type="transduction_closure_link",
+            num_qubits=4,
+            counts=counts,
+            expected=expected,
+            family="photonic_link",
+            time_ms=time_ms,
+            metadata={
+                "stressors": ["transduction_link", "calibration", "phase_stability"],
+                "suite": "transduction-closure",
+            },
+        )
+
+    def run_transduction_closure_remote_parity(self) -> BenchmarkResult:
+        """Closure-pack remote parity ladder for repeated seam usage."""
+        qasm = remote_parity_ladder_8q()
+        counts, time_ms = self._execute(qasm, self.shots)
+        expected = ["00000000", "11111111"]
+        return self._build_result(
+            name="Transduction Closure Remote Parity-8",
+            circuit_type="transduction_closure_remote_parity",
+            num_qubits=8,
+            counts=counts,
+            expected=expected,
+            family="remote_entangling",
+            time_ms=time_ms,
+            metadata={
+                "stressors": ["transduction_link", "retry", "logical_patch"],
+                "suite": "transduction-closure",
+            },
+        )
+
+    def run_transduction_closure_patch_syndrome(self) -> BenchmarkResult:
+        """Closure-pack patch syndrome round for logical transport pressure."""
+        qasm = patch_syndrome_round_9q()
+        counts, time_ms = self._execute(qasm, self.shots)
+        expected = ["000000000", "111111111"]
+        return self._build_result(
+            name="Transduction Closure Patch Syndrome-9",
+            circuit_type="transduction_closure_patch_syndrome",
+            num_qubits=9,
+            counts=counts,
+            expected=expected,
+            family="syndrome_burst",
+            time_ms=time_ms,
+            metadata={
+                "stressors": ["logical_patch", "memory_wait", "control_jitter"],
+                "suite": "transduction-closure",
+            },
+        )
+
+    def run_transducer_calibration_loop(self) -> BenchmarkResult:
+        """Calibration-focused seam loop for transducer closure readiness."""
+        return self._run_transducer_calibration_loop(suite="transduction-closure")
+
+    def _run_transducer_calibration_loop(self, *, suite: str) -> BenchmarkResult:
+        """Internal helper for seam-calibration workloads across multiple suites."""
+        qasm = transducer_calibration_loop_6q()
+        counts, time_ms = self._execute(qasm, self.shots)
+        expected = ["000000", "111111"]
+        return self._build_result(
+            name="Transducer Calibration Loop-6",
+            circuit_type="transducer_calibration_loop",
+            num_qubits=6,
+            counts=counts,
+            expected=expected,
+            family="transduction_closure",
+            time_ms=time_ms,
+            metadata={
+                "stressors": ["transduction_link", "calibration", "phase_stability"],
+                "suite": suite,
+            },
+        )
+
+    def run_logical_patch_handoff(self) -> BenchmarkResult:
+        """Logical-patch handoff surrogate across a transduced modular bus."""
+        return self._run_logical_patch_handoff(suite="transduction-closure")
+
+    def _run_logical_patch_handoff(self, *, suite: str) -> BenchmarkResult:
+        """Internal helper for logical-patch handoff workloads across multiple suites."""
+        qasm = logical_patch_handoff_10q()
+        counts, time_ms = self._execute(qasm, self.shots)
+        expected = ["0000000000", "1111111111"]
+        return self._build_result(
+            name="Logical Patch Handoff-10",
+            circuit_type="logical_patch_handoff",
+            num_qubits=10,
+            counts=counts,
+            expected=expected,
+            family="logical_patch_transport",
+            time_ms=time_ms,
+            metadata={
+                "stressors": ["transduction_link", "retry", "logical_patch"],
+                "suite": suite,
+            },
         )
 
     # ------------------------------------------------------------------

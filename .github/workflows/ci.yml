@@ -156,15 +156,20 @@ jobs:
         run: |
           mkdir -p artifacts/hybrid-benchmark
           mkdir -p artifacts/hybrid-stress-benchmark
+          mkdir -p artifacts/transduction-closure-benchmark
           python -m qontos_bench.cli \
             --circuit hybrid \
             --output artifacts/hybrid-benchmark
           python -m qontos_bench.cli \
             --circuit hybrid-stress \
             --output artifacts/hybrid-stress-benchmark
+          python -m qontos_bench.cli \
+            --circuit transduction-closure \
+            --output artifacts/transduction-closure-benchmark
       - uses: actions/upload-artifact@v4
         with:
           name: hybrid-benchmark-reports
           path: |
             artifacts/hybrid-benchmark
             artifacts/hybrid-stress-benchmark
+            artifacts/transduction-closure-benchmark

@@ -42,9 +42,12 @@ def main() -> int:
             "remote-parity",
             "distributed-ghz-ladder",
             "patch-syndrome",
+            "transducer-cal",
+            "logical-patch-handoff",
             "all",
             "hybrid",
             "hybrid-stress",
+            "transduction-closure",
             "full",
         ],
         default="all",
@@ -63,6 +66,9 @@ def main() -> int:
     elif args.circuit == "hybrid-stress":
         results = runner.run_hybrid_stress_pack()
         suite = "hybrid_stress"
+    elif args.circuit == "transduction-closure":
+        results = runner.run_transduction_closure_pack()
+        suite = "transduction_closure"
     elif args.circuit == "full":
         results = runner.run_suite("full")
         suite = "full-stack"
@@ -84,6 +90,11 @@ def main() -> int:
             "patch-syndrome",
         }:
             suite = "hybrid_stress"
+        elif args.circuit in {
+            "transducer-cal",
+            "logical-patch-handoff",
+        }:
+            suite = "transduction_closure"
 
     report_path = generate_report(results, args.output, suite=suite)
 

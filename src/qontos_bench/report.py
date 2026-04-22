@@ -76,6 +76,7 @@ def generate_json_report(
     total_latency = sum(r["latency_ms"] for r in normalised)
     family_summary = _build_family_summary(normalised)
     stressor_summary = _build_stressor_summary(normalised)
+    closure_summary = _build_closure_summary(family_summary, stressor_summary)
 
     report: dict = {
         "version": "1.0.0",
@@ -99,6 +100,7 @@ def generate_json_report(
         },
         "family_summary": family_summary,
         "stressor_summary": stressor_summary,
+        "closure_summary": closure_summary,
     }
     if readiness is not None:
         report["readiness"] = readiness
@@ -255,6 +257,32 @@ def _render_markdown(report: dict) -> str:
             )
         lines.append("")
 
+    closure_summary = report.get("closure_summary") or {}
+    if closure_summary:
+        lines.append("## Transduction Closure Summary")
+        lines.append("")
+        lines.append(f"- **Closure status**: {closure_summary.get('closure_status', 'N/A')}")
+        lines.append(f"- **Closure score**: {closure_summary.get('closure_score', 'N/A')}")
+        lines.append(
+            f"- **Transduction-link pass rate**: {closure_summary.get('transduction_link_pass_rate', 'N/A')}"
+        )
+        lines.append(
+            f"- **Retry pass rate**: {closure_summary.get('retry_pass_rate', 'N/A')}"
+        )
+        lines.append(
+            f"- **Logical-patch pass rate**: {closure_summary.get('logical_patch_pass_rate', 'N/A')}"
+        )
+        lines.append(
+            f"- **Remote-entangling pass rate**: {closure_summary.get('remote_entangling_pass_rate', 'N/A')}"
+        )
+        lines.append(
+            f"- **Calibration pass rate**: {closure_summary.get('calibration_pass_rate', 'N/A')}"
+        )
+        lines.append(
+            f"- **Phase-stability pass rate**: {closure_summary.get('phase_stability_pass_rate', 'N/A')}"
+        )
+        lines.append("")
+
     readiness = report.get("readiness")
     if readiness:
         lines.append("## Readiness")
@@ -351,3 +379,63 @@ def _build_stressor_summary(results: list[dict]) -> list[dict]:
         )
 
     return summary
+
+
+def _build_closure_summary(
+    family_summary: list[dict],
+    stressor_summary: list[dict],
+) -> dict:
+    family_rates = {
+        str(entry.get("family")): float(entry.get("pass_rate", 0.0))
+        for entry in family_summary
+        if entry.get("family") is not None
+    }
+    stressor_rates = {
+        str(entry.get("stressor")): float(entry.get("pass_rate", 0.0))
+        for entry in stressor_summary
+        if entry.get("stressor") is not None
+    }
+
+    transduction_link_rate = stressor_rates.get("transduction_link", 0.0)
+    retry_rate = stressor_rates.get("retry", transduction_link_rate)
+    calibration_rate = stressor_rates.get("calibration", transduction_link_rate)
+    phase_stability_rate = stressor_rates.get("phase_stability", transduction_link_rate)
+    logical_patch_sources = [
+        family_rates.get("logical_patch_transport"),
+        family_rates.get("syndrome_burst"),
+    ]
+    logical_patch_values = [value for value in logical_patch_sources if value is not None]
+    logical_patch_rate = round(sum(logical_patch_values) / len(logical_patch_values), 4) if logical_patch_values else 0.0
+    remote_entangling_rate = family_rates.get("remote_entangling", 0.0)
+
+    closure_score = round(
+        (
+            transduction_link_rate * 0.30
+            + retry_rate * 0.15
+            + calibration_rate * 0.15
+            + phase_stability_rate * 0.10
+            + logical_patch_rate * 0.20
+            + remote_entangling_rate * 0.10
+        ),
+        4,
+    )
+
+    if closure_score >= 0.98:
+        closure_status = "STRONG"
+    elif closure_score >= 0.94:
+        closure_status = "PASSABLE"
+    elif closure_score >= 0.85:
+        closure_status = "MARGINAL"
+    else:
+        closure_status = "OPEN"
+
+    return {
+        "closure_status": closure_status,
+        "closure_score": closure_score,
+        "transduction_link_pass_rate": round(transduction_link_rate, 4),
+        "retry_pass_rate": round(retry_rate, 4),
+        "calibration_pass_rate": round(calibration_rate, 4),
+        "phase_stability_pass_rate": round(phase_stability_rate, 4),
+        "logical_patch_pass_rate": round(logical_patch_rate, 4),
+        "remote_entangling_pass_rate": round(remote_entangling_rate, 4),
+    }

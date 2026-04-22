@@ -64,6 +64,19 @@
         }
       }
     },
+    "closure_summary": {
+      "type": "object",
+      "properties": {
+        "closure_status": {"type": "string"},
+        "closure_score": {"type": "number"},
+        "transduction_link_pass_rate": {"type": "number"},
+        "retry_pass_rate": {"type": "number"},
+        "calibration_pass_rate": {"type": "number"},
+        "phase_stability_pass_rate": {"type": "number"},
+        "logical_patch_pass_rate": {"type": "number"},
+        "remote_entangling_pass_rate": {"type": "number"}
+      }
+    },
     "summary": {
       "type": "object",
       "properties": {

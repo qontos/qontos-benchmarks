@@ -58,8 +58,8 @@ pytest
 ```
 
 CI validates both paths: the released-tag install (on main push) and the local-checkout install (on every PR).
-CI also now emits both `hybrid` and `hybrid-stress` benchmark artifacts from the live benchmark packs so downstream systems workflows can consume real generated JSON reports instead of static fixtures.
-The repo now also ships a separate **hybrid stress** pack so we can probe the superconducting-photonic seam with workloads that specifically target transduction, retry, memory-wait, control-jitter, and entanglement-supply pressure.
+CI also now emits `hybrid`, `hybrid-stress`, and `transduction-closure` benchmark artifacts from the live benchmark packs so downstream systems workflows can consume real generated JSON reports instead of static fixtures.
+The repo now also ships a separate **hybrid stress** pack and a dedicated **transduction closure** pack so we can probe the superconducting-photonic seam with workloads that specifically target transduction, retry, calibration, phase stability, logical-patch transport, control-jitter, and entanglement-supply pressure.
 
 ## Quick Start
 
@@ -101,11 +101,25 @@ python -m qontos_bench --report json --output results.json
 - `remote-parity`
 - `distributed-ghz-ladder`
 - `patch-syndrome`
+- `transducer-cal`
+- `logical-patch-handoff`
+
+### Transduction Closure Pack
+
+- `transduction-closure`
+- `transducer-cal`
+- `logical-patch-handoff`
 
 Run the stress pack directly:
 
 ```bash
 python -m qontos_bench --circuit hybrid-stress
+```
+
+Run the closure pack directly:
+
+```bash
+python -m qontos_bench --circuit transduction-closure
 ```
 
 ## Methodology
