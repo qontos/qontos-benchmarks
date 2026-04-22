@@ -30,6 +30,7 @@
           "passed": {"type": "boolean"},
           "latency_ms": {"type": "number"},
           "shots": {"type": "integer"},
+          "metadata": {"type": "object"},
           "expected_states": {"type": "array", "items": {"type": "string"}},
           "top_counts": {"type": "object"}
         }
@@ -41,6 +42,20 @@
         "type": "object",
         "properties": {
           "family": {"type": "string"},
+          "total": {"type": "integer"},
+          "passed": {"type": "integer"},
+          "failed": {"type": "integer"},
+          "pass_rate": {"type": "number"},
+          "avg_fidelity": {"type": "number"}
+        }
+      }
+    },
+    "stressor_summary": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "stressor": {"type": "string"},
           "total": {"type": "integer"},
           "passed": {"type": "integer"},
           "failed": {"type": "integer"},

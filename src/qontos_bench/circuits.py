@@ -300,6 +300,138 @@ measure q[4] -> c[4];
 """
 
 
+def entanglement_swapping_6q() -> str:
+    """6-qubit entanglement-swapping surrogate across multiple seam handoffs."""
+    return """\
+OPENQASM 2.0;
+include "qelib1.inc";
+qreg q[6];
+creg c[6];
+h q[0];
+cx q[0],q[1];
+h q[2];
+cx q[2],q[3];
+h q[4];
+cx q[4],q[5];
+cx q[1],q[2];
+cx q[3],q[4];
+measure q[0] -> c[0];
+measure q[1] -> c[1];
+measure q[2] -> c[2];
+measure q[3] -> c[3];
+measure q[4] -> c[4];
+measure q[5] -> c[5];
+"""
+
+
+def teleportation_ladder_8q() -> str:
+    """8-qubit teleportation ladder for state-transfer pressure across modules."""
+    return """\
+OPENQASM 2.0;
+include "qelib1.inc";
+qreg q[8];
+creg c[8];
+h q[0];
+cx q[0],q[1];
+h q[2];
+cx q[2],q[3];
+h q[4];
+cx q[4],q[5];
+h q[6];
+cx q[6],q[7];
+cx q[1],q[2];
+cx q[3],q[4];
+cx q[5],q[6];
+measure q[0] -> c[0];
+measure q[1] -> c[1];
+measure q[2] -> c[2];
+measure q[3] -> c[3];
+measure q[4] -> c[4];
+measure q[5] -> c[5];
+measure q[6] -> c[6];
+measure q[7] -> c[7];
+"""
+
+
+def remote_parity_ladder_8q() -> str:
+    """8-qubit remote parity ladder with repeated modular entangling pressure."""
+    return """\
+OPENQASM 2.0;
+include "qelib1.inc";
+qreg q[8];
+creg c[8];
+h q[0];
+cx q[0],q[1];
+cx q[1],q[2];
+cx q[2],q[3];
+cx q[3],q[4];
+cx q[4],q[5];
+cx q[5],q[6];
+cx q[6],q[7];
+cx q[1],q[4];
+cx q[3],q[6];
+measure q[0] -> c[0];
+measure q[1] -> c[1];
+measure q[2] -> c[2];
+measure q[3] -> c[3];
+measure q[4] -> c[4];
+measure q[5] -> c[5];
+measure q[6] -> c[6];
+measure q[7] -> c[7];
+"""
+
+
+def distributed_ghz_8q() -> str:
+    """8-qubit distributed GHZ ladder for larger entanglement-supply pressure."""
+    lines = [
+        'OPENQASM 2.0;',
+        'include "qelib1.inc";',
+        'qreg q[8];',
+        'creg c[8];',
+        'h q[0];',
+        'cx q[0],q[1];',
+        'cx q[1],q[2];',
+        'cx q[2],q[3];',
+        'cx q[3],q[4];',
+        'cx q[4],q[5];',
+        'cx q[5],q[6];',
+        'cx q[6],q[7];',
+    ]
+    for i in range(8):
+        lines.append(f'measure q[{i}] -> c[{i}];')
+    return '\n'.join(lines)
+
+
+def patch_syndrome_round_9q() -> str:
+    """9-qubit syndrome-style round for control and memory-pressure surrogates."""
+    return """\
+OPENQASM 2.0;
+include "qelib1.inc";
+qreg q[9];
+creg c[9];
+h q[0];
+cx q[0],q[1];
+cx q[0],q[2];
+cx q[1],q[3];
+cx q[2],q[4];
+cx q[3],q[5];
+cx q[4],q[6];
+cx q[5],q[7];
+cx q[6],q[8];
+cx q[2],q[5];
+cx q[3],q[6];
+measure q[0] -> c[0];
+measure q[1] -> c[1];
+measure q[2] -> c[2];
+measure q[3] -> c[3];
+measure q[4] -> c[4];
+measure q[5] -> c[5];
+measure q[6] -> c[6];
+measure q[7] -> c[7];
+measure q[8] -> c[8];
+"""
+
+
 def random_circuit(n_qubits: int = 5, depth: int = 10, seed: int = 42) -> str:
     """Random circuit for stress testing.
 

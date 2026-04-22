@@ -201,6 +201,11 @@ class TestAllBenchmarksDefined:
             "remote-cnot",
             "distributed-ghz",
             "syndrome-burst",
+            "entanglement-swap",
+            "teleport-ladder",
+            "remote-parity",
+            "distributed-ghz-ladder",
+            "patch-syndrome",
         }
         dispatch = {
             "bell": runner.run_bell_pair,
@@ -215,6 +220,11 @@ class TestAllBenchmarksDefined:
             "remote-cnot": runner.run_remote_cnot_surrogate,
             "distributed-ghz": runner.run_distributed_ghz,
             "syndrome-burst": runner.run_syndrome_burst,
+            "entanglement-swap": runner.run_entanglement_swapping,
+            "teleport-ladder": runner.run_teleportation_ladder,
+            "remote-parity": runner.run_remote_parity_ladder,
+            "distributed-ghz-ladder": runner.run_distributed_ghz_ladder,
+            "patch-syndrome": runner.run_patch_syndrome_round,
         }
         assert set(dispatch.keys()) == expected_keys
 
@@ -246,6 +256,11 @@ class TestAllBenchmarksDefined:
             "remote-cnot",
             "distributed-ghz",
             "syndrome-burst",
+            "entanglement-swap",
+            "teleport-ladder",
+            "remote-parity",
+            "distributed-ghz-ladder",
+            "patch-syndrome",
         ],
     )
     def test_run_single_each(self, key: str):
@@ -271,7 +286,21 @@ class TestAllBenchmarksDefined:
     def test_run_full_suite_includes_standard_and_hybrid(self):
         runner = BenchmarkRunner(shots=256)
         results = runner.run_suite("full")
-        assert len(results) == 12
+        assert len(results) == 17
+
+    @patch.object(BenchmarkRunner, "_execute", _fake_execute)
+    def test_run_hybrid_stress_pack_returns_expected_count(self):
+        runner = BenchmarkRunner(shots=256)
+        results = runner.run_hybrid_stress_pack()
+        assert len(results) == 5
+        assert {result.family for result in results} == {
+            "photonic_link",
+            "teleportation",
+            "remote_entangling",
+            "distributed_entanglement",
+            "syndrome_burst",
+        }
+        assert all(result.metadata.get("suite") == "hybrid-stress" for result in results)
 
 
 # ===================================================================
@@ -387,6 +416,25 @@ class TestSummaryStatistics:
         assert family_summary["photonic_link"]["failed"] == 1
         assert family_summary["syndrome_burst"]["pass_rate"] == 1.0
 
+    def test_generate_json_report_builds_stressor_summary(self):
+        results = [
+            {
+                **_make_result("a", fidelity=1.0, passed=True, latency_ms=10.0),
+                "family": "photonic_link",
+                "metadata": {"stressors": ["transduction_link", "retry"]},
+            },
+            {
+                **_make_result("b", fidelity=0.8, passed=False, latency_ms=12.0),
+                "family": "remote_entangling",
+                "metadata": {"stressors": ["retry"]},
+            },
+        ]
+        report = generate_json_report(results, suite="hybrid_stress")
+        stressor_summary = {entry["stressor"]: entry for entry in report["stressor_summary"]}
+        assert stressor_summary["retry"]["total"] == 2
+        assert stressor_summary["retry"]["failed"] == 1
+        assert stressor_summary["transduction_link"]["pass_rate"] == 1.0
+
     def test_generate_markdown_report_with_readiness(self):
         results = [_make_result("a", fidelity=1.0, passed=True, latency_ms=10.0)]
         text = generate_markdown_report(results, readiness=_make_readiness())
@@ -421,6 +469,18 @@ class TestSummaryStatistics:
         md = generate_markdown_report(results, suite="hybrid")
         assert "## Family Summary" in md
         assert "photonic_link" in md
+
+    def test_generate_markdown_report_contains_stressor_summary(self):
+        results = [
+            {
+                **_make_result("hybrid", fidelity=1.0),
+                "family": "photonic_link",
+                "metadata": {"stressors": ["transduction_link"]},
+            }
+        ]
+        md = generate_markdown_report(results, suite="hybrid_stress")
+        assert "## Stressor Summary" in md
+        assert "transduction_link" in md
 
     def test_save_report_creates_files(self):
         results = [_make_result("bell")]

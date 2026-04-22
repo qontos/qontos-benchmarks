@@ -37,8 +37,14 @@ def main() -> int:
             "remote-cnot",
             "distributed-ghz",
             "syndrome-burst",
+            "entanglement-swap",
+            "teleport-ladder",
+            "remote-parity",
+            "distributed-ghz-ladder",
+            "patch-syndrome",
             "all",
             "hybrid",
+            "hybrid-stress",
             "full",
         ],
         default="all",
@@ -54,6 +60,9 @@ def main() -> int:
     elif args.circuit == "hybrid":
         results = runner.run_hybrid_pack()
         suite = "hybrid"
+    elif args.circuit == "hybrid-stress":
+        results = runner.run_hybrid_stress_pack()
+        suite = "hybrid_stress"
     elif args.circuit == "full":
         results = runner.run_suite("full")
         suite = "full-stack"
@@ -67,6 +76,14 @@ def main() -> int:
             "syndrome-burst",
         }:
             suite = "hybrid"
+        elif args.circuit in {
+            "entanglement-swap",
+            "teleport-ladder",
+            "remote-parity",
+            "distributed-ghz-ladder",
+            "patch-syndrome",
+        }:
+            suite = "hybrid_stress"
 
     report_path = generate_report(results, args.output, suite=suite)
 

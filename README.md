@@ -59,6 +59,7 @@ pytest
 
 CI validates both paths: the released-tag install (on main push) and the local-checkout install (on every PR).
 CI also now emits a `hybrid-benchmark-report` artifact from the live hybrid benchmark pack so downstream systems workflows can consume a real generated JSON report instead of a static fixture.
+The repo now also ships a separate **hybrid stress** pack so we can probe the superconducting-photonic seam with workloads that specifically target transduction, retry, memory-wait, control-jitter, and entanglement-supply pressure.
 
 ## Quick Start
 
@@ -85,6 +86,28 @@ python -m qontos_bench --report json --output results.json
 | H2 VQE Ansatz | RY + CNOT + RY | 2 | All 2-qubit states | >= 0.85 |
 | Random 5Q | Mixed (depth=10) | 5 | All 5-qubit states | >= 0.85 |
 
+### Hybrid Modular Pack
+
+- `photonic-bell`
+- `teleport`
+- `remote-cnot`
+- `distributed-ghz`
+- `syndrome-burst`
+
+### Hybrid Stress Pack
+
+- `entanglement-swap`
+- `teleport-ladder`
+- `remote-parity`
+- `distributed-ghz-ladder`
+- `patch-syndrome`
+
+Run the stress pack directly:
+
+```bash
+python -m qontos_bench --circuit hybrid-stress
+```
+
 ## Methodology
 
 Each benchmark is executed through the full QONTOS pipeline:
@@ -94,6 +117,8 @@ Each benchmark is executed through the full QONTOS pipeline:
 3. **Fidelity computation**: `F = (expected state counts) / total_shots`
 
 Pass threshold: **0.85**. Default shot count: **8,192**.
+
+The report schema now also includes a `stressor_summary` section derived from benchmark metadata so downstream systems workflows can see which hybrid bottleneck classes are still weak, not just which circuit families passed.
 
 ### What the benchmarks prove
 

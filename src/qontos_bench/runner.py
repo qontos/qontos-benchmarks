@@ -11,13 +11,18 @@ from qontos_bench.circuits import (
     bell_pair,
     bernstein_vazirani,
     distributed_ghz_6q,
+    distributed_ghz_8q,
+    entanglement_swapping_6q,
     ghz_state,
     h2_vqe_ansatz,
+    patch_syndrome_round_9q,
     photonic_link_bell_4q,
     quantum_fourier_transform,
     random_circuit,
+    remote_parity_ladder_8q,
     remote_cnot_surrogate_4q,
     syndrome_burst_5q,
+    teleportation_ladder_8q,
     teleportation_chain_4q,
 )
 
@@ -79,18 +84,33 @@ class BenchmarkRunner:
         self.results.append(self.run_syndrome_burst())
         return self.results
 
+    def run_hybrid_stress_pack(self) -> list[BenchmarkResult]:
+        """Run the seam-aware hybrid stress benchmark pack."""
+        self.results = []
+        self.results.append(self.run_entanglement_swapping())
+        self.results.append(self.run_teleportation_ladder())
+        self.results.append(self.run_remote_parity_ladder())
+        self.results.append(self.run_distributed_ghz_ladder())
+        self.results.append(self.run_patch_syndrome_round())
+        return self.results
+
     def run_suite(self, suite: str) -> list[BenchmarkResult]:
         """Run one named benchmark suite."""
         if suite == "standard":
             return self.run_all()
         if suite == "hybrid":
             return self.run_hybrid_pack()
+        if suite == "hybrid-stress":
+            return self.run_hybrid_stress_pack()
         if suite == "full":
             standard = self.run_all()
             hybrid = self.run_hybrid_pack()
-            self.results = [*standard, *hybrid]
+            stress = self.run_hybrid_stress_pack()
+            self.results = [*standard, *hybrid, *stress]
             return self.results
-        raise ValueError(f"Unknown suite: {suite}. Choose from ['standard', 'hybrid', 'full']")
+        raise ValueError(
+            f"Unknown suite: {suite}. Choose from ['standard', 'hybrid', 'hybrid-stress', 'full']"
+        )
 
     def run_single(self, name: str) -> BenchmarkResult:
         """Run a single benchmark by name."""
@@ -107,6 +127,11 @@ class BenchmarkRunner:
             "remote-cnot": self.run_remote_cnot_surrogate,
             "distributed-ghz": self.run_distributed_ghz,
             "syndrome-burst": self.run_syndrome_burst,
+            "entanglement-swap": self.run_entanglement_swapping,
+            "teleport-ladder": self.run_teleportation_ladder,
+            "remote-parity": self.run_remote_parity_ladder,
+            "distributed-ghz-ladder": self.run_distributed_ghz_ladder,
+            "patch-syndrome": self.run_patch_syndrome_round,
         }
         if name not in dispatch:
             raise ValueError(f"Unknown benchmark: {name}. Choose from {list(dispatch)}")
@@ -251,6 +276,7 @@ class BenchmarkRunner:
             expected=expected,
             family="photonic_link",
             time_ms=time_ms,
+            metadata={"stressors": ["transduction_link"], "suite": "hybrid"},
         )
 
     def run_teleportation_chain(self) -> BenchmarkResult:
@@ -266,6 +292,7 @@ class BenchmarkRunner:
             expected=expected,
             family="teleportation",
             time_ms=time_ms,
+            metadata={"stressors": ["memory_wait", "control_jitter"], "suite": "hybrid"},
         )
 
     def run_remote_cnot_surrogate(self) -> BenchmarkResult:
@@ -281,6 +308,7 @@ class BenchmarkRunner:
             expected=expected,
             family="remote_entangling",
             time_ms=time_ms,
+            metadata={"stressors": ["retry", "transduction_link"], "suite": "hybrid"},
         )
 
     def run_distributed_ghz(self) -> BenchmarkResult:
@@ -296,6 +324,7 @@ class BenchmarkRunner:
             expected=expected,
             family="distributed_entanglement",
             time_ms=time_ms,
+            metadata={"stressors": ["entanglement_supply"], "suite": "hybrid"},
         )
 
     def run_syndrome_burst(self) -> BenchmarkResult:
@@ -311,6 +340,87 @@ class BenchmarkRunner:
             expected=expected,
             family="syndrome_burst",
             time_ms=time_ms,
+            metadata={"stressors": ["control_jitter", "memory_wait"], "suite": "hybrid"},
+        )
+
+    def run_entanglement_swapping(self) -> BenchmarkResult:
+        """Entanglement-swapping stress case for seam handoff pressure."""
+        qasm = entanglement_swapping_6q()
+        counts, time_ms = self._execute(qasm, self.shots)
+        expected = ["000000", "111111"]
+        return self._build_result(
+            name="Entanglement Swap-6",
+            circuit_type="entanglement_swap",
+            num_qubits=6,
+            counts=counts,
+            expected=expected,
+            family="photonic_link",
+            time_ms=time_ms,
+            metadata={"stressors": ["transduction_link", "entanglement_supply"], "suite": "hybrid-stress"},
+        )
+
+    def run_teleportation_ladder(self) -> BenchmarkResult:
+        """Longer teleportation ladder for state-transfer and wait pressure."""
+        qasm = teleportation_ladder_8q()
+        counts, time_ms = self._execute(qasm, self.shots)
+        expected = ["00000000", "11111111"]
+        return self._build_result(
+            name="Teleportation Ladder-8",
+            circuit_type="teleportation_ladder",
+            num_qubits=8,
+            counts=counts,
+            expected=expected,
+            family="teleportation",
+            time_ms=time_ms,
+            metadata={"stressors": ["memory_wait", "control_jitter"], "suite": "hybrid-stress"},
+        )
+
+    def run_remote_parity_ladder(self) -> BenchmarkResult:
+        """Remote parity ladder for repeated modular entangling pressure."""
+        qasm = remote_parity_ladder_8q()
+        counts, time_ms = self._execute(qasm, self.shots)
+        expected = ["00000000", "11111111"]
+        return self._build_result(
+            name="Remote Parity Ladder-8",
+            circuit_type="remote_parity_ladder",
+            num_qubits=8,
+            counts=counts,
+            expected=expected,
+            family="remote_entangling",
+            time_ms=time_ms,
+            metadata={"stressors": ["retry", "transduction_link"], "suite": "hybrid-stress"},
+        )
+
+    def run_distributed_ghz_ladder(self) -> BenchmarkResult:
+        """Distributed GHZ ladder for entanglement-supply pressure at larger width."""
+        qasm = distributed_ghz_8q()
+        counts, time_ms = self._execute(qasm, self.shots)
+        expected = ["00000000", "11111111"]
+        return self._build_result(
+            name="Distributed GHZ Ladder-8",
+            circuit_type="distributed_ghz_ladder",
+            num_qubits=8,
+            counts=counts,
+            expected=expected,
+            family="distributed_entanglement",
+            time_ms=time_ms,
+            metadata={"stressors": ["entanglement_supply", "memory_wait"], "suite": "hybrid-stress"},
+        )
+
+    def run_patch_syndrome_round(self) -> BenchmarkResult:
+        """Patch-style syndrome round for control and memory-pressure stress."""
+        qasm = patch_syndrome_round_9q()
+        counts, time_ms = self._execute(qasm, self.shots)
+        expected = ["000000000", "111111111"]
+        return self._build_result(
+            name="Patch Syndrome Round-9",
+            circuit_type="patch_syndrome_round",
+            num_qubits=9,
+            counts=counts,
+            expected=expected,
+            family="syndrome_burst",
+            time_ms=time_ms,
+            metadata={"stressors": ["control_jitter", "memory_wait"], "suite": "hybrid-stress"},
         )
 
     # ------------------------------------------------------------------
@@ -347,6 +457,7 @@ class BenchmarkRunner:
         expected: list[str],
         family: str,
         time_ms: float,
+        metadata: dict | None = None,
     ) -> BenchmarkResult:
         """Build a BenchmarkResult from raw execution outputs."""
         total = sum(counts.values())
@@ -378,6 +489,7 @@ class BenchmarkRunner:
             execution_time_ms=time_ms,
             timestamp=datetime.now(timezone.utc).isoformat(),
             passed=passed,
+            metadata=dict(metadata or {}),
         )
 
     @staticmethod

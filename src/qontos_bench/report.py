@@ -57,6 +57,8 @@ def generate_json_report(
         }
         if "expected_states" in d:
             entry["expected_states"] = d["expected_states"]
+        if "metadata" in d:
+            entry["metadata"] = dict(d["metadata"])
         if "top_counts" in d:
             entry["top_counts"] = d["top_counts"]
         elif "counts" in d:
@@ -73,6 +75,7 @@ def generate_json_report(
     avg_fidelity = sum(fidelities) / total if total else 0.0
     total_latency = sum(r["latency_ms"] for r in normalised)
     family_summary = _build_family_summary(normalised)
+    stressor_summary = _build_stressor_summary(normalised)
 
     report: dict = {
         "version": "1.0.0",
@@ -95,6 +98,7 @@ def generate_json_report(
             "total_latency_ms": round(total_latency, 1),
         },
         "family_summary": family_summary,
+        "stressor_summary": stressor_summary,
     }
     if readiness is not None:
         report["readiness"] = readiness
@@ -223,6 +227,22 @@ def _render_markdown(report: dict) -> str:
     if family_summary:
         lines.append("## Family Summary")
         lines.append("")
+
+    stressor_summary = report.get("stressor_summary", [])
+    if stressor_summary:
+        lines.append("## Stressor Summary")
+        lines.append("")
+        lines.append("| Stressor | Total | Passed | Pass Rate | Avg Fidelity |")
+        lines.append("|--------|-------|--------|-----------|--------------|")
+        for stressor in stressor_summary:
+            lines.append(
+                f"| {stressor.get('stressor', 'unknown')} "
+                f"| {stressor.get('total', 0)} "
+                f"| {stressor.get('passed', 0)} "
+                f"| {stressor.get('pass_rate', 0):.1%} "
+                f"| {stressor.get('avg_fidelity', 0):.4f} |"
+            )
+        lines.append("")
         lines.append("| Family | Total | Passed | Pass Rate | Avg Fidelity |")
         lines.append("|--------|-------|--------|-----------|--------------|")
         for family in family_summary:
@@ -284,6 +304,44 @@ def _build_family_summary(results: list[dict]) -> list[dict]:
         summary.append(
             {
                 "family": family,
+                "total": total,
+                "passed": passed,
+                "failed": total - passed,
+                "pass_rate": round(passed / total, 4) if total else 0.0,
+                "avg_fidelity": round(fidelity_sum / total, 4) if total else 0.0,
+            }
+        )
+
+    return summary
+
+
+def _build_stressor_summary(results: list[dict]) -> list[dict]:
+    stressors: dict[str, dict[str, float | int | str]] = {}
+    for result in results:
+        metadata = result.get("metadata") or {}
+        for stressor in metadata.get("stressors", []):
+            bucket = stressors.setdefault(
+                str(stressor),
+                {
+                    "stressor": str(stressor),
+                    "total": 0,
+                    "passed": 0,
+                    "_fidelity_sum": 0.0,
+                },
+            )
+            bucket["total"] += 1
+            bucket["passed"] += 1 if result.get("passed") else 0
+            bucket["_fidelity_sum"] += float(result.get("fidelity", 0.0))
+
+    summary: list[dict] = []
+    for stressor in sorted(stressors):
+        bucket = stressors[stressor]
+        total = int(bucket["total"])
+        passed = int(bucket["passed"])
+        fidelity_sum = float(bucket["_fidelity_sum"])
+        summary.append(
+            {
+                "stressor": stressor,
                 "total": total,
                 "passed": passed,
                 "failed": total - passed,
