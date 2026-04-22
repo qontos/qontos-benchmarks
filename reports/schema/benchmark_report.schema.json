@@ -72,9 +72,15 @@
         "transduction_link_pass_rate": {"type": "number"},
         "retry_pass_rate": {"type": "number"},
         "calibration_pass_rate": {"type": "number"},
+        "optical_coupling_pass_rate": {"type": "number"},
+        "heralding_pass_rate": {"type": "number"},
+        "detector_pass_rate": {"type": "number"},
+        "phase_lock_pass_rate": {"type": "number"},
         "phase_stability_pass_rate": {"type": "number"},
         "logical_patch_pass_rate": {"type": "number"},
-        "remote_entangling_pass_rate": {"type": "number"}
+        "remote_entangling_pass_rate": {"type": "number"},
+        "weakest_channel_component": {"type": "string"},
+        "weakest_channel_pass_rate": {"type": "number"}
       }
     },
     "summary": {

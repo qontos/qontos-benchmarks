@@ -281,6 +281,24 @@ def _render_markdown(report: dict) -> str:
         lines.append(
             f"- **Phase-stability pass rate**: {closure_summary.get('phase_stability_pass_rate', 'N/A')}"
         )
+        lines.append(
+            f"- **Optical-coupling pass rate**: {closure_summary.get('optical_coupling_pass_rate', 'N/A')}"
+        )
+        lines.append(
+            f"- **Heralding pass rate**: {closure_summary.get('heralding_pass_rate', 'N/A')}"
+        )
+        lines.append(
+            f"- **Detector pass rate**: {closure_summary.get('detector_pass_rate', 'N/A')}"
+        )
+        lines.append(
+            f"- **Phase-lock pass rate**: {closure_summary.get('phase_lock_pass_rate', 'N/A')}"
+        )
+        lines.append(
+            f"- **Weakest channel component**: {closure_summary.get('weakest_channel_component', 'N/A')}"
+        )
+        lines.append(
+            f"- **Weakest channel pass rate**: {closure_summary.get('weakest_channel_pass_rate', 'N/A')}"
+        )
         lines.append("")
 
     readiness = report.get("readiness")
@@ -399,6 +417,10 @@ def _build_closure_summary(
     transduction_link_rate = stressor_rates.get("transduction_link", 0.0)
     retry_rate = stressor_rates.get("retry", transduction_link_rate)
     calibration_rate = stressor_rates.get("calibration", transduction_link_rate)
+    optical_coupling_rate = stressor_rates.get("optical_coupling", transduction_link_rate)
+    heralding_rate = stressor_rates.get("heralding", transduction_link_rate)
+    detector_rate = stressor_rates.get("detector", transduction_link_rate)
+    phase_lock_rate = stressor_rates.get("phase_lock", stressor_rates.get("phase_stability", transduction_link_rate))
     phase_stability_rate = stressor_rates.get("phase_stability", transduction_link_rate)
     logical_patch_sources = [
         family_rates.get("logical_patch_transport"),
@@ -408,14 +430,29 @@ def _build_closure_summary(
     logical_patch_rate = round(sum(logical_patch_values) / len(logical_patch_values), 4) if logical_patch_values else 0.0
     remote_entangling_rate = family_rates.get("remote_entangling", 0.0)
 
+    channel_rates = {
+        "calibration": calibration_rate,
+        "optical_coupling": optical_coupling_rate,
+        "heralding": heralding_rate,
+        "detector": detector_rate,
+        "phase_lock": phase_lock_rate,
+        "phase_stability": phase_stability_rate,
+    }
+    weakest_channel_component = min(channel_rates, key=channel_rates.get)
+    weakest_channel_pass_rate = channel_rates[weakest_channel_component]
+
     closure_score = round(
         (
-            transduction_link_rate * 0.30
-            + retry_rate * 0.15
-            + calibration_rate * 0.15
-            + phase_stability_rate * 0.10
-            + logical_patch_rate * 0.20
-            + remote_entangling_rate * 0.10
+            transduction_link_rate * 0.20
+            + retry_rate * 0.10
+            + calibration_rate * 0.10
+            + optical_coupling_rate * 0.10
+            + heralding_rate * 0.10
+            + detector_rate * 0.10
+            + phase_lock_rate * 0.10
+            + phase_stability_rate * 0.05
+            + logical_patch_rate * 0.10
+            + remote_entangling_rate * 0.05
         ),
         4,
     )
@@ -435,7 +472,13 @@ def _build_closure_summary(
         "transduction_link_pass_rate": round(transduction_link_rate, 4),
         "retry_pass_rate": round(retry_rate, 4),
         "calibration_pass_rate": round(calibration_rate, 4),
+        "optical_coupling_pass_rate": round(optical_coupling_rate, 4),
+        "heralding_pass_rate": round(heralding_rate, 4),
+        "detector_pass_rate": round(detector_rate, 4),
+        "phase_lock_pass_rate": round(phase_lock_rate, 4),
         "phase_stability_pass_rate": round(phase_stability_rate, 4),
         "logical_patch_pass_rate": round(logical_patch_rate, 4),
         "remote_entangling_pass_rate": round(remote_entangling_rate, 4),
+        "weakest_channel_component": weakest_channel_component,
+        "weakest_channel_pass_rate": round(weakest_channel_pass_rate, 4),
     }

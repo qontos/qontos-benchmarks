@@ -208,6 +208,10 @@ class TestAllBenchmarksDefined:
             "patch-syndrome",
             "transducer-cal",
             "logical-patch-handoff",
+            "optical-coupling",
+            "heralding-window",
+            "detector-correlation",
+            "phase-lock-window",
         }
         dispatch = {
             "bell": runner.run_bell_pair,
@@ -229,6 +233,10 @@ class TestAllBenchmarksDefined:
             "patch-syndrome": runner.run_patch_syndrome_round,
             "transducer-cal": runner.run_transducer_calibration_loop,
             "logical-patch-handoff": runner.run_logical_patch_handoff,
+            "optical-coupling": runner.run_optical_coupling_probe,
+            "heralding-window": runner.run_heralding_window_probe,
+            "detector-correlation": runner.run_detector_correlation_probe,
+            "phase-lock-window": runner.run_phase_lock_window_probe,
         }
         assert set(dispatch.keys()) == expected_keys
 
@@ -267,6 +275,10 @@ class TestAllBenchmarksDefined:
             "patch-syndrome",
             "transducer-cal",
             "logical-patch-handoff",
+            "optical-coupling",
+            "heralding-window",
+            "detector-correlation",
+            "phase-lock-window",
         ],
     )
     def test_run_single_each(self, key: str):
@@ -292,7 +304,7 @@ class TestAllBenchmarksDefined:
     def test_run_full_suite_includes_standard_and_hybrid(self):
         runner = BenchmarkRunner(shots=256)
         results = runner.run_suite("full")
-        assert len(results) == 24
+        assert len(results) == 28
 
     @patch.object(BenchmarkRunner, "_execute", _fake_execute)
     def test_run_hybrid_stress_pack_returns_expected_count(self):
@@ -314,7 +326,7 @@ class TestAllBenchmarksDefined:
     def test_run_transduction_closure_pack_returns_expected_count(self):
         runner = BenchmarkRunner(shots=256)
         results = runner.run_transduction_closure_pack()
-        assert len(results) == 5
+        assert len(results) == 9
         assert {result.family for result in results} == {
             "logical_patch_transport",
             "photonic_link",
@@ -443,12 +455,12 @@ class TestSummaryStatistics:
             {
                 **_make_result("a", fidelity=1.0, passed=True, latency_ms=10.0),
                 "family": "photonic_link",
-                "metadata": {"stressors": ["transduction_link", "retry"]},
+                "metadata": {"stressors": ["transduction_link", "retry", "optical_coupling"]},
             },
             {
                 **_make_result("b", fidelity=0.8, passed=False, latency_ms=12.0),
                 "family": "remote_entangling",
-                "metadata": {"stressors": ["retry"]},
+                "metadata": {"stressors": ["retry", "detector"]},
             },
         ]
         report = generate_json_report(results, suite="hybrid_stress")
@@ -456,36 +468,64 @@ class TestSummaryStatistics:
         assert stressor_summary["retry"]["total"] == 2
         assert stressor_summary["retry"]["failed"] == 1
         assert stressor_summary["transduction_link"]["pass_rate"] == 1.0
+        assert stressor_summary["optical_coupling"]["pass_rate"] == 1.0
+        assert stressor_summary["detector"]["failed"] == 1
 
     def test_generate_json_report_builds_transduction_closure_summary(self):
         results = [
             {
                 **_make_result("closure-link", fidelity=0.99, passed=True, latency_ms=10.0),
                 "family": "photonic_link",
-                "metadata": {"stressors": ["transduction_link", "calibration", "phase_stability"]},
+                "metadata": {
+                    "stressors": [
+                        "transduction_link",
+                        "calibration",
+                        "phase_stability",
+                        "optical_coupling",
+                    ]
+                },
             },
             {
                 **_make_result("closure-remote", fidelity=0.97, passed=True, latency_ms=12.0),
                 "family": "remote_entangling",
-                "metadata": {"stressors": ["transduction_link", "retry", "logical_patch"]},
+                "metadata": {
+                    "stressors": [
+                        "transduction_link",
+                        "retry",
+                        "logical_patch",
+                        "heralding",
+                    ]
+                },
             },
             {
                 **_make_result("closure-patch", fidelity=0.96, passed=True, latency_ms=14.0),
                 "family": "logical_patch_transport",
-                "metadata": {"stressors": ["logical_patch"]},
+                "metadata": {"stressors": ["logical_patch", "detector"]},
             },
             {
                 **_make_result("closure-syndrome", fidelity=0.95, passed=True, latency_ms=16.0),
                 "family": "syndrome_burst",
-                "metadata": {"stressors": ["logical_patch"]},
+                "metadata": {"stressors": ["logical_patch", "phase_lock"]},
             },
         ]
         report = generate_json_report(results, suite="transduction_closure")
         closure = report["closure_summary"]
         assert closure["closure_status"] == "STRONG"
         assert closure["transduction_link_pass_rate"] == 1.0
+        assert closure["optical_coupling_pass_rate"] == 1.0
+        assert closure["heralding_pass_rate"] == 1.0
+        assert closure["detector_pass_rate"] == 1.0
+        assert closure["phase_lock_pass_rate"] == 1.0
         assert closure["logical_patch_pass_rate"] == 1.0
         assert closure["remote_entangling_pass_rate"] == 1.0
+        assert closure["weakest_channel_component"] in {
+            "calibration",
+            "optical_coupling",
+            "heralding",
+            "detector",
+            "phase_lock",
+            "phase_stability",
+        }
 
     def test_generate_markdown_report_with_readiness(self):
         results = [_make_result("a", fidelity=1.0, passed=True, latency_ms=10.0)]
@@ -527,34 +567,43 @@ class TestSummaryStatistics:
             {
                 **_make_result("hybrid", fidelity=1.0),
                 "family": "photonic_link",
-                "metadata": {"stressors": ["transduction_link"]},
+                "metadata": {"stressors": ["transduction_link", "optical_coupling"]},
             }
         ]
         md = generate_markdown_report(results, suite="hybrid_stress")
         assert "## Stressor Summary" in md
         assert "transduction_link" in md
+        assert "optical_coupling" in md
 
     def test_generate_markdown_report_contains_closure_summary(self):
         results = [
             {
                 **_make_result("closure-link", fidelity=1.0),
                 "family": "photonic_link",
-                "metadata": {"stressors": ["transduction_link", "calibration", "phase_stability"]},
+                "metadata": {
+                    "stressors": [
+                        "transduction_link",
+                        "calibration",
+                        "phase_stability",
+                        "optical_coupling",
+                    ]
+                },
             },
             {
                 **_make_result("logical-patch", fidelity=1.0),
                 "family": "logical_patch_transport",
-                "metadata": {"stressors": ["logical_patch"]},
+                "metadata": {"stressors": ["logical_patch", "detector"]},
             },
             {
                 **_make_result("remote", fidelity=1.0),
                 "family": "remote_entangling",
-                "metadata": {"stressors": ["retry"]},
+                "metadata": {"stressors": ["retry", "heralding", "phase_lock"]},
             },
         ]
         md = generate_markdown_report(results, suite="transduction_closure")
         assert "## Transduction Closure Summary" in md
         assert "Closure status" in md
+        assert "Weakest channel component" in md
 
     def test_save_report_creates_files(self):
         results = [_make_result("bell")]

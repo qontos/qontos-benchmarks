@@ -10,13 +10,17 @@ from datetime import datetime, timezone
 from qontos_bench.circuits import (
     bell_pair,
     bernstein_vazirani,
+    detector_correlation_probe_6q,
     distributed_ghz_6q,
     distributed_ghz_8q,
     entanglement_swapping_6q,
     ghz_state,
     h2_vqe_ansatz,
+    heralding_window_probe_6q,
     logical_patch_handoff_10q,
+    optical_coupling_probe_6q,
     patch_syndrome_round_9q,
+    phase_lock_window_probe_6q,
     photonic_link_bell_4q,
     quantum_fourier_transform,
     random_circuit,
@@ -106,6 +110,10 @@ class BenchmarkRunner:
         self.results.append(self.run_transduction_closure_patch_syndrome())
         self.results.append(self.run_transducer_calibration_loop())
         self.results.append(self.run_logical_patch_handoff())
+        self.results.append(self.run_optical_coupling_probe())
+        self.results.append(self.run_heralding_window_probe())
+        self.results.append(self.run_detector_correlation_probe())
+        self.results.append(self.run_phase_lock_window_probe())
         return self.results
 
     def run_suite(self, suite: str) -> list[BenchmarkResult]:
@@ -151,6 +159,10 @@ class BenchmarkRunner:
             "patch-syndrome": self.run_patch_syndrome_round,
             "transducer-cal": self.run_transducer_calibration_loop,
             "logical-patch-handoff": self.run_logical_patch_handoff,
+            "optical-coupling": self.run_optical_coupling_probe,
+            "heralding-window": self.run_heralding_window_probe,
+            "detector-correlation": self.run_detector_correlation_probe,
+            "phase-lock-window": self.run_phase_lock_window_probe,
         }
         if name not in dispatch:
             raise ValueError(f"Unknown benchmark: {name}. Choose from {list(dispatch)}")
@@ -542,6 +554,82 @@ class BenchmarkRunner:
             metadata={
                 "stressors": ["transduction_link", "retry", "logical_patch"],
                 "suite": suite,
+            },
+        )
+
+    def run_optical_coupling_probe(self) -> BenchmarkResult:
+        """Optical-coupling probe for channel-aware transduction closure."""
+        qasm = optical_coupling_probe_6q()
+        counts, time_ms = self._execute(qasm, self.shots)
+        expected = ["000000", "111111"]
+        return self._build_result(
+            name="Optical Coupling Probe-6",
+            circuit_type="optical_coupling_probe",
+            num_qubits=6,
+            counts=counts,
+            expected=expected,
+            family="transduction_closure",
+            time_ms=time_ms,
+            metadata={
+                "stressors": ["transduction_link", "optical_coupling"],
+                "suite": "transduction-closure",
+            },
+        )
+
+    def run_heralding_window_probe(self) -> BenchmarkResult:
+        """Heralding-window probe for repeated Bell-event closure pressure."""
+        qasm = heralding_window_probe_6q()
+        counts, time_ms = self._execute(qasm, self.shots)
+        expected = ["000000", "111111"]
+        return self._build_result(
+            name="Heralding Window Probe-6",
+            circuit_type="heralding_window_probe",
+            num_qubits=6,
+            counts=counts,
+            expected=expected,
+            family="transduction_closure",
+            time_ms=time_ms,
+            metadata={
+                "stressors": ["transduction_link", "heralding", "retry"],
+                "suite": "transduction-closure",
+            },
+        )
+
+    def run_detector_correlation_probe(self) -> BenchmarkResult:
+        """Detector-correlation probe for receive-path closure fidelity."""
+        qasm = detector_correlation_probe_6q()
+        counts, time_ms = self._execute(qasm, self.shots)
+        expected = ["000000", "111111"]
+        return self._build_result(
+            name="Detector Correlation Probe-6",
+            circuit_type="detector_correlation_probe",
+            num_qubits=6,
+            counts=counts,
+            expected=expected,
+            family="transduction_closure",
+            time_ms=time_ms,
+            metadata={
+                "stressors": ["transduction_link", "detector"],
+                "suite": "transduction-closure",
+            },
+        )
+
+    def run_phase_lock_window_probe(self) -> BenchmarkResult:
+        """Phase-lock duty-cycle probe for channel timing closure."""
+        qasm = phase_lock_window_probe_6q()
+        counts, time_ms = self._execute(qasm, self.shots)
+        expected = ["000000", "111111"]
+        return self._build_result(
+            name="Phase-Lock Window Probe-6",
+            circuit_type="phase_lock_window_probe",
+            num_qubits=6,
+            counts=counts,
+            expected=expected,
+            family="transduction_closure",
+            time_ms=time_ms,
+            metadata={
+                "stressors": ["transduction_link", "phase_lock", "phase_stability"],
+                "suite": "transduction-closure",
             },
         )
 

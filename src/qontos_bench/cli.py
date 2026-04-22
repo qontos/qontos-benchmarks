@@ -44,6 +44,10 @@ def main() -> int:
             "patch-syndrome",
             "transducer-cal",
             "logical-patch-handoff",
+            "optical-coupling",
+            "heralding-window",
+            "detector-correlation",
+            "phase-lock-window",
             "all",
             "hybrid",
             "hybrid-stress",
@@ -93,6 +97,10 @@ def main() -> int:
         elif args.circuit in {
             "transducer-cal",
             "logical-patch-handoff",
+            "optical-coupling",
+            "heralding-window",
+            "detector-correlation",
+            "phase-lock-window",
         }:
             suite = "transduction_closure"
 
