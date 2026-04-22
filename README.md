@@ -58,7 +58,7 @@ pytest
 ```
 
 CI validates both paths: the released-tag install (on main push) and the local-checkout install (on every PR).
-CI also now emits a `hybrid-benchmark-report` artifact from the live hybrid benchmark pack so downstream systems workflows can consume a real generated JSON report instead of a static fixture.
+CI also now emits both `hybrid` and `hybrid-stress` benchmark artifacts from the live benchmark packs so downstream systems workflows can consume real generated JSON reports instead of static fixtures.
 The repo now also ships a separate **hybrid stress** pack so we can probe the superconducting-photonic seam with workloads that specifically target transduction, retry, memory-wait, control-jitter, and entanglement-supply pressure.
 
 ## Quick Start
